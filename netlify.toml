@@ -1,0 +1,5 @@
+# Used when the GitHub repo is connected to Netlify. Not needed for
+# drag-and-drop deploys of the `out` folder.
+[build]
+  command = "npm run build"
+  publish = "out"

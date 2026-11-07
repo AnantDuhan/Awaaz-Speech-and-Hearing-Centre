@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { allowSearchIndexing } from "@/content/launch";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -22,6 +23,8 @@ export const metadata: Metadata = {
     template: `%s — ${site.name}`,
   },
   description: site.description,
+  // Adds <meta name="robots" content="noindex, nofollow"> to every page until launch.
+  robots: allowSearchIndexing ? { index: true, follow: true } : { index: false, follow: false },
   openGraph: {
     type: "website",
     siteName: site.name,

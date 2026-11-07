@@ -69,4 +69,9 @@ To change colours, edit the tokens at the top of `src/app/globals.css`. `--highl
 
 ## Deploy
 
-Works as-is on Vercel, Netlify or any Node host. All pages are prerendered.
+`npm run build` exports the whole site as static files into the `out` folder. No server needed.
+
+- **Quickest:** drag the `out` folder onto https://app.netlify.com/drop.
+- **Auto-deploy from GitHub:** connect the repo in Netlify. `netlify.toml` already sets the build command and the `out` folder. Cloudflare Pages works too: build command `npm run build`, output directory `out`.
+
+While the doctor is reviewing, every page carries a `noindex` tag so nothing shows up on Google. On launch day, set `allowSearchIndexing` to `true` in `src/content/launch.ts`, set the real domain in `site.url`, and redeploy.

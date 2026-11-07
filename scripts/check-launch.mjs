@@ -8,6 +8,11 @@ const lines = readFileSync(file, "utf8").split("\n");
 const todo = [];
 const placeholder = /\[[A-Za-z][A-Za-z0-9 .:&'’–-]*\]/g;
 
+const launch = readFileSync(new URL("../src/content/launch.ts", import.meta.url), "utf8");
+if (/allowSearchIndexing\s*=\s*false/.test(launch)) {
+  todo.push("src/content/launch.ts: search engines are blocked — set allowSearchIndexing to true on launch day");
+}
+
 lines.forEach((line, index) => {
   const text = line.trim();
   const at = `line ${index + 1}`;

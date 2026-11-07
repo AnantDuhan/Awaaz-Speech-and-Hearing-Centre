@@ -14,6 +14,9 @@ import {
 import ui from "@/styles/ui.module.css";
 import styles from "./service.module.css";
 
+// Only the services listed in site.ts exist; anything else is a 404.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return services.map((service) => ({ slug: service.slug }));
 }

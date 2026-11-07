@@ -1,18 +1,11 @@
-import { cacheLife } from "next/cache";
 import Link from "next/link";
 import { formatHours, fullAddress, links, site } from "@/content/site";
 import ui from "@/styles/ui.module.css";
 import styles from "./Footer.module.css";
 
-// Cached so pages can still be prerendered; refreshed daily.
-async function getCurrentYear() {
-  "use cache";
-  cacheLife("days");
-  return new Date().getFullYear();
-}
-
-export async function Footer() {
-  const year = await getCurrentYear();
+export function Footer() {
+  // The site is built to static HTML, so this is the year of the last build.
+  const year = new Date().getFullYear();
 
   return (
     <footer className={styles.footer}>

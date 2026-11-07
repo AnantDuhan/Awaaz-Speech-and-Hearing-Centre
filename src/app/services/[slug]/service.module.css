@@ -1,0 +1,154 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 48px 64px;
+  align-items: start;
+  padding-block: 72px 88px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.heading {
+  margin-bottom: 18px;
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.paragraph {
+  font-size: 1.0625rem;
+  color: var(--muted);
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 1.0625rem;
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--ink);
+}
+
+.note {
+  margin-top: 24px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: #fff4e5;
+  border: 2px solid #f5c27a;
+  color: #4a2c00;
+}
+
+.bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding-left: 22px;
+  font-size: 1.0625rem;
+  color: var(--muted);
+}
+
+.bullets li::marker {
+  color: var(--accent);
+}
+
+.aside {
+  position: sticky;
+  top: 24px;
+}
+
+.bookCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 32px 28px;
+  border-radius: var(--radius-card);
+  background: var(--highlight);
+  color: var(--navy);
+}
+
+.bookCard :focus-visible {
+  outline-color: var(--navy);
+}
+
+.bookCard h2 {
+  font-size: 1.625rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.bookCard .btnLabel {
+  margin-left: 8px;
+}
+
+.hours {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 0;
+  font-size: 0.9375rem;
+}
+
+.hours div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hours dt {
+  font-weight: 800;
+}
+
+.hours dd {
+  margin: 0;
+}
+
+.relatedTitle {
+  margin-bottom: 32px;
+}
+
+.related {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding-block: 48px 64px;
+  }
+
+  .aside {
+    position: static;
+  }
+
+  .related {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

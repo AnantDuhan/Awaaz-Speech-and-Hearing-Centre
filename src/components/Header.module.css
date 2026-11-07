@@ -1,0 +1,143 @@
+.header {
+  background: var(--navy);
+  color: var(--on-navy);
+}
+
+.header :focus-visible {
+  outline-color: var(--highlight);
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "brand nav actions";
+  align-items: center;
+  gap: 16px 32px;
+  padding-block: 20px;
+}
+
+.brand {
+  grid-area: brand;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--on-navy);
+  text-decoration: none;
+}
+
+.brand:hover {
+  color: var(--on-navy);
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brandText strong {
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.brandText span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-navy-muted);
+}
+
+.nav {
+  grid-area: nav;
+  justify-self: center;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 26px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--on-navy-link);
+  text-decoration: none;
+}
+
+.links a:hover {
+  color: var(--on-navy);
+}
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menuButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--navy-outline);
+  background: transparent;
+  color: var(--on-navy);
+  cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+  .inner {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand actions"
+      "nav nav";
+  }
+
+  .menuButton {
+    display: inline-flex;
+  }
+
+  .nav {
+    display: none;
+    justify-self: stretch;
+  }
+
+  .nav[data-open="true"] {
+    display: block;
+  }
+
+  .links {
+    flex-direction: column;
+    border-top: 1px solid var(--navy-raised);
+    padding-top: 8px;
+  }
+
+  .links a {
+    width: 100%;
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* The hero's "Book a first visit" sits right below on phones. */
+  .bookButton {
+    display: none;
+  }
+
+  .brandText strong {
+    white-space: nowrap;
+  }
+
+  .brandText span {
+    display: none;
+  }
+}

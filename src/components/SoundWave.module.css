@@ -1,0 +1,25 @@
+.wave {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.wave rect[data-tone="muted"] {
+  fill: var(--navy-bar);
+}
+
+.wave rect[data-tone="yellow"] {
+  fill: var(--highlight);
+}
+
+.wave rect[data-tone="coral"] {
+  fill: var(--coral-strong);
+}
+
+.wave rect[data-tone="mint"] {
+  fill: var(--mint);
+}
+
+.wave rect[data-tone="sky"] {
+  fill: var(--sky-strong);
+}

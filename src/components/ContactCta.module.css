@@ -1,0 +1,71 @@
+.section {
+  padding-bottom: 88px;
+}
+
+.card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px 48px;
+  padding: 56px 48px;
+  border-radius: 40px;
+  background: var(--highlight);
+  color: var(--navy);
+}
+
+.card :focus-visible {
+  outline-color: var(--navy);
+}
+
+.copy {
+  flex: 1 1 460px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.copy h2 {
+  font-size: clamp(2rem, 1.4rem + 2vw, 2.625rem);
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.copy p {
+  font-size: 1.125rem;
+}
+
+.copy a {
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .section {
+    padding-bottom: 64px;
+  }
+
+  .card {
+    padding: 36px 24px;
+    border-radius: 32px;
+  }
+
+  .copy {
+    flex-basis: 100%;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions a {
+    flex: 1 1 100%;
+  }
+}

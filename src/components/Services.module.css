@@ -1,0 +1,103 @@
+.lede {
+  max-width: 440px;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 2px solid var(--border);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 32px 52px minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: 12px 28px;
+  padding-block: 24px;
+  border-bottom: 2px solid var(--border);
+}
+
+.number {
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: var(--ink);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.title a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.text {
+  color: var(--muted);
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 800;
+}
+
+.adultsLink {
+  margin-top: 28px;
+  color: var(--muted);
+}
+
+.adultsLink a {
+  font-weight: 800;
+}
+
+@media (max-width: 860px) {
+  .row {
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "icon title more"
+      "icon text text";
+    gap: 4px 16px;
+    align-items: start;
+  }
+
+  .number {
+    display: none;
+  }
+
+  .icon {
+    grid-area: icon;
+  }
+
+  .title {
+    grid-area: title;
+    font-size: 1.25rem;
+    align-self: center;
+  }
+
+  .text {
+    grid-area: text;
+  }
+
+  .more {
+    grid-area: more;
+  }
+}

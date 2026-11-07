@@ -1,0 +1,57 @@
+.button {
+  position: fixed;
+  right: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 22px 0 18px;
+  border-radius: 999px;
+  background: #15803d;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 1rem;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgb(11 27 58 / 0.3);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.button:hover {
+  color: #ffffff;
+  background: #166534;
+  transform: translateY(-2px);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  .button {
+    right: 16px;
+    width: 56px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  /* Icon-only on phones; the label stays for screen readers. */
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button:hover {
+    transform: none;
+  }
+}

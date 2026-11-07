@@ -1,0 +1,192 @@
+.hero {
+  background: var(--navy);
+  color: var(--on-navy);
+  border-radius: 0 0 48px 48px;
+}
+
+.hero :focus-visible {
+  outline-color: var(--highlight);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 40px;
+  padding-top: 40px;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.chip {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--navy-raised);
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.title {
+  font-size: clamp(2.75rem, 1.6rem + 4vw, 4.6rem);
+  line-height: 1.02;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.lede {
+  max-width: 520px;
+  font-size: 1.1875rem;
+  color: var(--on-navy-muted);
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tags li {
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--navy);
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+/* Illustration */
+.art {
+  position: relative;
+  height: 460px;
+}
+
+.blob {
+  position: absolute;
+  inset: 6%;
+  background: var(--highlight);
+  border-radius: var(--blob-1);
+}
+
+.dot {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.dotMint {
+  top: 0;
+  right: 2%;
+  width: 60px;
+  height: 60px;
+  background: var(--mint);
+}
+
+.dotCoral {
+  bottom: 8%;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  background: var(--coral-strong);
+}
+
+.photo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(290px, 70%);
+  transform: translate(-50%, -50%);
+}
+
+.bubble {
+  position: absolute;
+  padding: 10px 20px;
+  font-weight: 900;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  color: var(--navy);
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.25);
+  white-space: nowrap;
+}
+
+.bubbleOne {
+  top: 12%;
+  left: 4%;
+  border-radius: 22px 22px 22px 4px;
+}
+
+.bubbleTwo {
+  top: 30%;
+  right: 4%;
+  font-size: 1.375rem;
+  border-radius: 22px 22px 4px 22px;
+}
+
+.bubbleThree {
+  bottom: 10%;
+  left: 10%;
+  background: var(--mint);
+  border-radius: 22px 22px 22px 4px;
+}
+
+.waveWrap {
+  padding-block: 40px 64px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .art {
+    height: 380px;
+    max-width: 460px;
+    width: 100%;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    border-radius: 0 0 32px 32px;
+  }
+
+  .chip {
+    border-radius: 18px;
+    font-size: 0.875rem;
+  }
+
+  .art {
+    height: 320px;
+  }
+
+  .bubble {
+    font-size: 1.125rem;
+    padding: 8px 14px;
+  }
+
+  .bubbleTwo {
+    font-size: 1rem;
+  }
+
+  .photo {
+    font-size: 0.875rem;
+    padding: 16px;
+  }
+
+  .waveWrap {
+    padding-block: 24px 48px;
+  }
+}

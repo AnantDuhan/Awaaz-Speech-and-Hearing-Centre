@@ -1,0 +1,59 @@
+.footer {
+  background: var(--navy);
+  color: var(--on-navy-muted);
+  font-size: 0.9375rem;
+}
+
+.footer :focus-visible {
+  outline-color: var(--highlight);
+}
+
+.footer a {
+  color: var(--on-navy-muted);
+}
+
+.footer a:hover {
+  color: var(--on-navy);
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 24px 48px;
+  padding-block: 48px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-style: normal;
+}
+
+.name {
+  font-size: 1.125rem;
+  font-weight: 900;
+  color: var(--on-navy);
+}
+
+.label {
+  color: var(--on-navy);
+}
+
+.copyright {
+  align-self: flex-end;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 560px) {
+  .copyright {
+    flex-basis: 100%;
+    align-self: auto;
+  }
+
+  /* Room for the floating WhatsApp button. */
+  .footer {
+    padding-bottom: 72px;
+  }
+}

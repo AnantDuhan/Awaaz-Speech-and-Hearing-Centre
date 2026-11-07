@@ -5,7 +5,7 @@ import { useState } from "react";
 import { navLinks, site } from "@/content/site";
 import ui from "@/styles/ui.module.css";
 import { Icon } from "./Icon";
-import { LogoMark } from "./Logo";
+import { LOGO_NAME, LOGO_TAGLINE, LogoMark } from "./Logo";
 import styles from "./Header.module.css";
 
 export function Header() {
@@ -15,11 +15,11 @@ export function Header() {
   return (
     <header className={styles.header}>
       <div className={`${ui.container} ${styles.inner}`}>
-        <Link href="/" className={styles.brand} onClick={close}>
+        <Link href="/" className={styles.brand} onClick={close} aria-label={`${site.name} — home`}>
           <LogoMark />
-          <span className={styles.brandText}>
-            <strong>{site.name}</strong>
-            <span>{site.tagline}</span>
+          <span className={styles.brandText} aria-hidden="true">
+            <strong>{LOGO_NAME}</strong>
+            <span>{LOGO_TAGLINE}</span>
           </span>
         </Link>
 

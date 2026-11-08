@@ -15,7 +15,11 @@ export default function HearingReportPage() {
   return (
     <main>
       <PageIntro
-        crumbs={[{ label: "Home", href: "/" }, { label: "Staff tools" }, { label: "Hearing test report" }]}
+        crumbs={[
+          { label: "Home", href: "/" },
+          { label: "Staff tools", href: "/tools" },
+          { label: "Hearing test report" },
+        ]}
         eyebrow="For clinic staff"
         title="Hearing test report"
       >

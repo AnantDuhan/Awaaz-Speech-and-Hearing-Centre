@@ -23,11 +23,15 @@ Requires Node.js 20.9 or newer.
 | `/services/[slug]` | One page per service (9 in total), each with its own search title |
 | `/checklist` | The 2-minute milestone checklist for parents |
 | `/sitemap.xml`, `/robots.txt` | Generated for search engines |
+| `/tools` | Staff tools index (bookmark it on the clinic computer) |
 | `/tools/hearing-report` | Staff tool: enter test results, download the report as an A4 PDF |
+| any unknown address | Custom "page not found" page (`src/app/not-found.tsx`, exported as `404.html`, which Netlify serves on its own) |
+
+To add another staff tool later, add a page under `src/app/tools/` and an entry to the `tools` list in `src/app/tools/page.tsx`.
 
 ## Hearing test report tool
 
-Open `/tools/hearing-report`. It isn't linked anywhere on the site, isn't in the sitemap, and is always `noindex`, even after launch.
+Open `/tools` (or `/tools/hearing-report` directly). Neither is linked anywhere on the public site or listed in the sitemap, and both are always `noindex`, even after launch.
 
 - **Private:** everything runs in the browser. Nothing is saved or sent, and closing the page clears it.
 - **Output:** a one-page A4 PDF, drawn at 300 dpi, with right and left audiograms in standard ASHA symbols, PTA, degree of hearing loss, speech audiometry, tympanometry, impression and recommendations. On phones, "Share PDF" sends it straight to WhatsApp. A JPEG download is also offered. The PDF holds the page as one image (`src/lib/pdf.ts`, no library), so its text isn't selectable.

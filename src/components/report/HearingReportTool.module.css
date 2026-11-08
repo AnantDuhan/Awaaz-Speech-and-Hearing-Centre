@@ -304,6 +304,28 @@
   cursor: wait;
 }
 
+.altDownload {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.linkButton {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linkButton:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .actionOutline,
 .actionOutline:hover {
   border: 2px solid var(--accent);

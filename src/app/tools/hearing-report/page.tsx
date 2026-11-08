@@ -19,7 +19,7 @@ export default function HearingReportPage() {
         eyebrow="For clinic staff"
         title="Hearing test report"
       >
-        <p>Enter the test results to create a report image (PNG or JPEG) to print or send on WhatsApp.</p>
+        <p>Enter the test results to create an A4 PDF report to print or send on WhatsApp.</p>
       </PageIntro>
       <section className={ui.section} aria-label="Report form">
         <div className={ui.container}>

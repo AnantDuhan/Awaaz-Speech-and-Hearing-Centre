@@ -21,6 +21,7 @@ import {
   STATUS_OPTIONS,
   type Thresholds,
 } from "@/lib/audiometry";
+import { jpegToPdf } from "@/lib/pdf";
 import { type ClinicInfo, drawReport, type ReportData } from "@/lib/renderReport";
 import ui from "@/styles/ui.module.css";
 import styles from "./HearingReportTool.module.css";
@@ -110,12 +111,13 @@ function exampleReport(): ReportData {
   return report;
 }
 
+/** Keeps letters from any script (so Hindi names survive), drops everything else. */
 function fileSlug(text: string) {
   return (
     text
       .trim()
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/[^\p{L}\p{M}\p{N}]+/gu, "-")
       .replace(/^-|-$/g, "") || "patient"
   );
 }
@@ -143,7 +145,7 @@ export function HearingReportTool() {
     try {
       return (
         typeof navigator.canShare === "function" &&
-        navigator.canShare({ files: [new File([""], "report.png", { type: "image/png" })] })
+        navigator.canShare({ files: [new File([""], "report.pdf", { type: "application/pdf" })] })
       );
     } catch {
       return false;
@@ -208,42 +210,58 @@ export function HearingReportTool() {
     0,
   );
 
-  const renderBlob = (type: "image/png" | "image/jpeg") =>
-    new Promise<Blob | null>((resolve) => {
+  /** Draws the report at 300 dpi (2480 × 3508) and returns it as a JPEG. */
+  const renderJpeg = () =>
+    new Promise<{ blob: Blob; width: number; height: number } | null>((resolve) => {
       const canvas = document.createElement("canvas");
       drawReport(canvas, data, CLINIC, { scale: 2, fontFamily });
-      canvas.toBlob(resolve, type, 0.92);
+      canvas.toBlob(
+        (blob) => resolve(blob ? { blob, width: canvas.width, height: canvas.height } : null),
+        "image/jpeg",
+        0.9,
+      );
     });
 
   const fileName = (extension: string) =>
     `hearing-report-${fileSlug(data.patient.name)}-${data.testDate || "undated"}.${extension}`;
 
-  const download = async (type: "image/png" | "image/jpeg", extension: string) => {
-    const blob = await renderBlob(type);
-    if (!blob) {
-      setStatus("Sorry, the image couldn't be created in this browser.");
+  const makeFile = async (format: "pdf" | "jpg") => {
+    const image = await renderJpeg();
+    if (!image) return null;
+    if (format === "jpg") return new File([image.blob], fileName("jpg"), { type: "image/jpeg" });
+    const bytes = new Uint8Array(await image.blob.arrayBuffer());
+    const pdf = jpegToPdf(bytes, image.width, image.height, {
+      title: `Hearing test report${data.patient.name.trim() ? ` — ${data.patient.name.trim()}` : ""}`,
+      author: site.name,
+    });
+    return new File([pdf], fileName("pdf"), { type: "application/pdf" });
+  };
+
+  const download = async (format: "pdf" | "jpg") => {
+    const file = await makeFile(format);
+    if (!file) {
+      setStatus("Sorry, the report couldn't be created in this browser.");
       return;
     }
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(file);
     const link = document.createElement("a");
     link.href = url;
-    link.download = fileName(extension);
+    link.download = file.name;
     document.body.appendChild(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    setStatus(`Saved ${fileName(extension)}`);
+    setStatus(`Saved ${file.name}`);
   };
 
   const share = async () => {
-    const blob = await renderBlob("image/jpeg");
-    if (!blob) return;
-    const file = new File([blob], fileName("jpg"), { type: "image/jpeg" });
+    const file = await makeFile("pdf");
+    if (!file) return;
     try {
       await navigator.share({ files: [file], title: "Hearing test report" });
       setStatus("Shared.");
     } catch (error) {
-      if ((error as DOMException)?.name !== "AbortError") setStatus("Sharing didn't work — download the image instead.");
+      if ((error as DOMException)?.name !== "AbortError") setStatus("Sharing didn't work — download the PDF instead.");
     }
   };
 
@@ -610,17 +628,9 @@ export function HearingReportTool() {
               type="button"
               className={`${ui.btn} ${ui.btnSmall} ${ui.btnAccent} ${styles.action}`}
               disabled={!fontsReady}
-              onClick={() => download("image/png", "png")}
+              onClick={() => download("pdf")}
             >
-              Download PNG
-            </button>
-            <button
-              type="button"
-              className={`${ui.btn} ${ui.btnSmall} ${styles.action} ${styles.actionOutline}`}
-              disabled={!fontsReady}
-              onClick={() => download("image/jpeg", "jpg")}
-            >
-              Download JPEG
+              Download PDF
             </button>
             {canShare ? (
               <button
@@ -629,10 +639,21 @@ export function HearingReportTool() {
                 disabled={!fontsReady}
                 onClick={share}
               >
-                Share
+                Share PDF
               </button>
             ) : null}
           </div>
+          <p className={styles.altDownload}>
+            Need a picture instead?{" "}
+            <button
+              type="button"
+              className={styles.linkButton}
+              disabled={!fontsReady}
+              onClick={() => download("jpg")}
+            >
+              Download as JPEG image
+            </button>
+          </p>
           <p className={styles.statusMessage} aria-live="polite">
             {status}
           </p>

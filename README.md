@@ -23,14 +23,14 @@ Requires Node.js 20.9 or newer.
 | `/services/[slug]` | One page per service (9 in total), each with its own search title |
 | `/checklist` | The 2-minute milestone checklist for parents |
 | `/sitemap.xml`, `/robots.txt` | Generated for search engines |
-| `/tools/hearing-report` | Staff tool: enter test results, download the report as PNG or JPEG |
+| `/tools/hearing-report` | Staff tool: enter test results, download the report as an A4 PDF |
 
 ## Hearing test report tool
 
 Open `/tools/hearing-report`. It isn't linked anywhere on the site, isn't in the sitemap, and is always `noindex`, even after launch.
 
 - **Private:** everything runs in the browser. Nothing is saved or sent, and closing the page clears it.
-- **Output:** an A4 report at 300 dpi (2480 × 3508), with right and left audiograms in standard ASHA symbols, PTA, degree of hearing loss, speech audiometry, tympanometry, impression and recommendations. On phones, "Share" sends the image straight to WhatsApp.
+- **Output:** a one-page A4 PDF, drawn at 300 dpi, with right and left audiograms in standard ASHA symbols, PTA, degree of hearing loss, speech audiometry, tympanometry, impression and recommendations. On phones, "Share PDF" sends it straight to WhatsApp. A JPEG download is also offered. The PDF holds the page as one image (`src/lib/pdf.ts`, no library), so its text isn't selectable.
 - **Grading:** Goodman (1965, PTA of 0.5/1/2 kHz) or WHO (2021, PTA of 0.5/1/2/4 kHz), chosen per report. The audiologist should confirm which one the clinic uses.
 - **Not a secure system:** anyone with the address can open the tool and make a report-looking image. The report number and "call to verify" line are the safeguard. For real access control, move it behind a login.
 - **Logic** is in `src/lib/audiometry.ts`, and the drawing is in `src/lib/renderReport.ts`.

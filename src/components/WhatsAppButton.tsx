@@ -1,8 +1,15 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { whatsappLink } from "@/content/site";
 import { Icon } from "./Icon";
 import styles from "./WhatsAppButton.module.css";
 
 export function WhatsAppButton() {
+  const pathname = usePathname();
+  // Staff tools don't need the patient-facing chat button.
+  if (pathname?.startsWith("/tools")) return null;
+
   return (
     <a
       href={whatsappLink()}

@@ -14,7 +14,7 @@ export const site = {
   url: "https://www.example.com",
   description:
     "Speech therapy, language support and hearing tests for children and adults — playful sessions, precise tests, and families involved every step of the way.",
-  email: "[EMAIL]",
+  email: "aawazksp@yahoo.com",
   phone: {
     display: "+91 9897426673",
     // Full international number, used for tel: links.
@@ -456,24 +456,12 @@ export function getService(slug: string) {
 
 export const team = [
   {
-    name: "[Name]",
+    name: "Pushpak Kumar",
     role: "Audiologist",
-    qualification: "[Qualification]",
+    qualification: "Speech and Hearing Professional (BASLP)",
     // e.g. the RCI registration (CRR) number.
-    registration: "[Reg. no.]",
-  },
-  {
-    name: "[Name]",
-    role: "Speech-language pathologist",
-    qualification: "[Qualification]",
-    registration: "[Reg. no.]",
-  },
-  {
-    name: "[Name]",
-    role: "Audiologist & speech-language pathologist",
-    qualification: "[Qualification]",
-    registration: "[Reg. no.]",
-  },
+    registration: "A81403",
+  }
 ];
 
 /* ------------------------------------------------------------------ */
@@ -487,11 +475,11 @@ export const faq = {
     {
       question: "How much does a visit cost?",
       answer:
-        "An assessment costs [FEE] and therapy sessions cost [FEE] each. For hearing aid prices, call or WhatsApp us — it depends on the model.",
+        "Please call or WhatsApp us to discuss session costs, which vary depending on the treatment. For hearing aid prices, get in touch with us — they vary by model.",
     },
     {
       question: "How long is a session?",
-      answer: "A first assessment takes about [DURATION]. Therapy sessions last [DURATION].",
+      answer: "A first assessment takes about 30 minutes. Therapy sessions last 45 minutes.",
     },
     {
       question: "Do I need a doctor's referral?",

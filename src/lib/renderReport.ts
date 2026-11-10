@@ -25,7 +25,7 @@ import {
   type Thresholds,
 } from "./audiometry";
 
-export const PAGE = { width: 1240, height: 1754 };
+export const PAGE = { width: 1754, height: 1240 };
 
 export type ReportData = {
   reportNo: string;
@@ -36,14 +36,11 @@ export type ReportData = {
     sex: string;
     id: string;
     referredBy: string;
-    complaint: string;
+    mobile: string;
+    address: string;
   };
   scaleId: Scale["id"];
   thresholds: Thresholds;
-  speech: { srt: Record<Ear, string>; sds: Record<Ear, string> };
-  tympanometry: { type: Record<Ear, string>; reflexes: Record<Ear, string> };
-  impression: string;
-  recommendations: string;
   audiologist: { name: string; qualification: string; registration: string };
 };
 
@@ -79,7 +76,7 @@ export function drawReport(
 ): { overflow: boolean } {
   const W = PAGE.width;
   const H = PAGE.height;
-  const M = 64;
+  const M = 58;
   canvas.width = W * options.scale;
   canvas.height = H * options.scale;
 
@@ -190,7 +187,7 @@ export function drawReport(
 
   const headerTextX = M + 82;
   write(fit(clinic.name, 720, 30, 900), headerTextX, 84, 30, 900, C.navy);
-  write(fit(`${clinic.address}  ·  ${clinic.phone}`, 760, 15, 600), headerTextX, 112, 15, 600, C.muted);
+  write(fit(`${clinic.address}  ·  ${clinic.phone}`, 1080, 15, 600), headerTextX, 112, 15, 600, C.muted);
 
   write("REPORT NO.", W - M, 74, 12, 800, C.faint, "right", 1.2);
   write(fit(orDash(data.reportNo), 220, 18, 800), W - M, 100, 18, 800, C.ink, "right");
@@ -217,7 +214,8 @@ export function drawReport(
     { label: "Patient ID", value: orDash(data.patient.id), column: 2, row: 0, span: 1 },
     { label: "Date of test", value: data.testDate ? formatDate(data.testDate) : "—", column: 3, row: 0, span: 1 },
     { label: "Referred by", value: orDash(data.patient.referredBy), column: 0, row: 1, span: 1 },
-    { label: "Complaint", value: orDash(data.patient.complaint), column: 1, row: 1, span: 3 },
+    { label: "Mobile", value: orDash(data.patient.mobile), column: 0, row: 1, span: 1 },
+    { label: "Address", value: orDash(data.patient.address), column: 1, row: 1, span: 3 },
   ];
   const cellWidth = (W - 2 * M - 48) / 4;
   for (const cell of cells) {
@@ -299,7 +297,7 @@ export function drawReport(
   };
 
   const panelTop = 362;
-  const panelGap = 40;
+  const panelGap = 54;
   const panelWidth = (W - 2 * M - panelGap) / 2;
   let panelBottom = 0;
 
@@ -335,11 +333,10 @@ export function drawReport(
     }
     for (const hz of ALL_FREQUENCIES) {
       const octave = OCTAVE_FREQUENCIES.includes(hz);
-      ctx.strokeStyle = C.grid;
-      ctx.setLineDash(octave ? [] : [3, 4]);
-      line(xFor(hz), top, xFor(hz), top + height);
+      ctx.strokeStyle = octave ? C.gridStrong : C.grid;
       ctx.setLineDash([]);
-      if (octave) write(formatFrequency(hz), xFor(hz), top + height + 21, 12.5, 700, C.muted, "center");
+      line(xFor(hz), top, xFor(hz), top + height);
+      write(String(hz), xFor(hz), top + height + 21, 11.5, 700, C.muted, "center");
     }
     ctx.strokeStyle = C.gridStrong;
     ctx.lineWidth = 1.5;
@@ -411,8 +408,8 @@ export function drawReport(
     panelBottom = Math.max(panelBottom, legendY);
   };
 
-  drawAudiogram("right", M);
-  drawAudiogram("left", M + panelWidth + panelGap);
+  drawAudiogram("left", M);
+  drawAudiogram("right", M + panelWidth + panelGap);
 
   /* ---------------- results table ---------------- */
 
@@ -424,38 +421,9 @@ export function drawReport(
     const result = pta[ear];
     return result.ok ? result.degree : `Not calculated (${result.reason})`;
   };
-  const both = (pair: Record<Ear, string>) => pair.right.trim() !== "" || pair.left.trim() !== "";
-  const unitValue = (value: string, unit: string) => (value.trim() ? `${value.trim()}${unit}` : "—");
-
   const rows: [string, string, string][] = [
     ["Pure-tone average (PTA)", ptaText("right"), ptaText("left")],
-    [`Degree (${scale.name})`, degreeText("right"), degreeText("left")],
   ];
-  if (both(data.speech.srt)) {
-    rows.push([
-      "Speech reception threshold (SRT)",
-      unitValue(data.speech.srt.right, " dB HL"),
-      unitValue(data.speech.srt.left, " dB HL"),
-    ]);
-  }
-  if (both(data.speech.sds)) {
-    rows.push([
-      "Speech discrimination score (SDS)",
-      unitValue(data.speech.sds.right, "%"),
-      unitValue(data.speech.sds.left, "%"),
-    ]);
-  }
-  if (both(data.tympanometry.type)) {
-    const typeText = (v: string) => (v ? `Type ${v}` : "—");
-    rows.push(["Tympanogram", typeText(data.tympanometry.type.right), typeText(data.tympanometry.type.left)]);
-  }
-  if (both(data.tympanometry.reflexes)) {
-    rows.push([
-      "Acoustic reflexes",
-      orDash(data.tympanometry.reflexes.right),
-      orDash(data.tympanometry.reflexes.left),
-    ]);
-  }
 
   const tableTop = panelBottom + 30;
   const rowHeight = 36;
@@ -492,51 +460,22 @@ export function drawReport(
     );
   });
 
-  /* ---------------- impression & recommendations ---------------- */
-
-  const signatureTop = H - 232;
-  let y = tableTop + rowHeight * (rows.length + 1) + 34;
-  const lineHeight = 23;
-  for (const [title, body] of [
-    ["IMPRESSION", data.impression],
-    ["RECOMMENDATIONS", data.recommendations],
-  ] as const) {
-    if (!body.trim()) continue;
-    const available = signatureTop - 20 - (y + 24);
-    const maxLines = Math.max(0, Math.floor(available / lineHeight));
-    if (maxLines < 1) {
-      overflow = true;
-      break;
-    }
-    write(title, M, y, 12.5, 900, C.navy, "left", 1.2);
-    let lines = wrap(body, W - 2 * M, 16, 600);
-    if (lines.length > maxLines) {
-      overflow = true;
-      lines = lines.slice(0, maxLines);
-      lines[maxLines - 1] = fit(`${lines[maxLines - 1]}…`, W - 2 * M, 16, 600);
-    }
-    lines.forEach((text, i) => write(text, M, y + 26 + i * lineHeight, 16, 600, C.ink));
-    y += 26 + lines.length * lineHeight + 24;
-  }
-
   /* ---------------- signature & footer ---------------- */
 
-  write("Hearing loss grading", M, signatureTop + 46, 12, 800, C.faint, "left", 0.5);
-  write(scale.short, M, signatureTop + 68, 14, 700, C.muted);
-  write("AC = air conduction · BC = bone conduction", M, signatureTop + 90, 14, 700, C.muted);
-  write("Audiogram symbols follow ASHA conventions", M, signatureTop + 112, 14, 700, C.muted);
+  write("AC = air conduction · BC = bone conduction", M, signatureTop + 75, 13, 700, C.muted);
+  write("Audiogram symbols follow ASHA conventions", M, signatureTop + 96, 13, 700, C.muted);
 
   const sigLeft = W - M - 330;
   ctx.strokeStyle = C.ink;
   ctx.lineWidth = 1.2;
-  line(sigLeft, signatureTop + 56, W - M, signatureTop + 56);
-  write("Signature", W - M, signatureTop + 74, 11.5, 700, C.faint, "right");
-  write(fit(orDash(data.audiologist.name), 330, 17, 800), W - M, signatureTop + 102, 17, 800, C.ink, "right");
-  write(fit(orDash(data.audiologist.qualification), 330, 14, 600), W - M, signatureTop + 124, 14, 600, C.muted, "right");
+  line(sigLeft, signatureTop + 48, W - M, signatureTop + 56);
+  write("Signature", W - M, signatureTop + 65, 11.5, 700, C.faint, "right");
+  write(fit(orDash(data.audiologist.name), 330, 17, 800), W - M, signatureTop + 88, 17, 800, C.ink, "right");
+  write(fit(orDash(data.audiologist.qualification), 330, 14, 600), W - M, signatureTop + 108, 14, 600, C.muted, "right");
   write(
     fit(`Reg. no. ${orDash(data.audiologist.registration)}`, 330, 14, 600),
     W - M,
-    signatureTop + 146,
+    signatureTop + 128,
     14,
     600,
     C.muted,
@@ -545,7 +484,7 @@ export function drawReport(
 
   ctx.strokeStyle = C.grid;
   ctx.lineWidth = 1;
-  line(M, H - 78, W - M, H - 78);
+  line(M, H - 43, W - M, H - 78);
   write(
     fit(
       "This report should be read with the clinical findings by a qualified audiologist or ENT doctor.",
@@ -554,7 +493,7 @@ export function drawReport(
       600,
     ),
     M,
-    H - 54,
+    H - 27,
     12.5,
     600,
     C.faint,
@@ -562,7 +501,7 @@ export function drawReport(
   write(
     fit(`To verify this report, call ${clinic.phone} and quote the report number.`, W - 2 * M, 12.5, 700),
     M,
-    H - 32,
+    H - 11,
     12.5,
     700,
     C.muted,

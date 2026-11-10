@@ -21,6 +21,7 @@ import {
 } from "@/lib/audiometry";
 import { jpegToPdf } from "@/lib/pdf";
 import { type ClinicInfo, drawReport, type ReportData } from "@/lib/renderReport";
+import { LOGO_IMAGE } from "@/components/Logo";
 import ui from "@/styles/ui.module.css";
 import styles from "./HearingReportTool.module.css";
 
@@ -118,6 +119,8 @@ export function HearingReportTool() {
     () => getComputedStyle(document.body).fontFamily || "system-ui, sans-serif",
   );
   const [fontsReady, setFontsReady] = useState(false);
+  const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
   const [status, setStatus] = useState("");
   const [canShare] = useState(() => {
     try {
@@ -152,16 +155,31 @@ export function HearingReportTool() {
     };
   }, [fontFamily]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const image = new Image();
+    image.onload = () => {
+      if (!cancelled) setLogoImage(image);
+    };
+    image.onerror = () => {
+      if (!cancelled) setLogoFailed(true);
+    };
+    image.src = LOGO_IMAGE.src;
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Redraw the preview after every change.
   useEffect(() => {
-    if (!fontsReady) return;
+    if (!fontsReady || !logoImage) return;
     const frame = requestAnimationFrame(() => {
       const canvas = previewRef.current;
       if (!canvas) return;
-      drawReport(canvas, data, CLINIC, { scale: 1, fontFamily });
+      drawReport(canvas, data, CLINIC, { scale: 1, fontFamily }, logoImage);
     });
     return () => cancelAnimationFrame(frame);
-  }, [data, fontsReady, fontFamily]);
+  }, [data, fontsReady, fontFamily, logoImage]);
 
   const scale: Scale = SCALES[data.scaleId];
   const pta = {
@@ -180,16 +198,15 @@ export function HearingReportTool() {
   );
 
   /** Draws the A4 landscape report at 300 dpi and returns it as a JPEG. */
-  const renderJpeg = () =>
-    new Promise<{ blob: Blob; width: number; height: number } | null>((resolve) => {
-      const canvas = document.createElement("canvas");
-      drawReport(canvas, data, CLINIC, { scale: 2, fontFamily });
-      canvas.toBlob(
-        (blob) => resolve(blob ? { blob, width: canvas.width, height: canvas.height } : null),
-        "image/jpeg",
-        0.9,
-      );
+  const renderJpeg = async () => {
+    if (!logoImage) return null;
+    const canvas = document.createElement("canvas");
+    drawReport(canvas, data, CLINIC, { scale: 2, fontFamily }, logoImage);
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.9);
     });
+    return blob ? { blob, width: canvas.width, height: canvas.height } : null;
+  };
 
   const fileName = (extension: string) =>
     `hearing-report-${fileSlug(data.patient.name)}-${data.testDate || "undated"}.${extension}`;
@@ -495,7 +512,7 @@ export function HearingReportTool() {
             <button
               type="button"
               className={`${ui.btn} ${ui.btnSmall} ${ui.btnAccent} ${styles.action}`}
-              disabled={!fontsReady}
+              disabled={!fontsReady || !logoImage}
               onClick={() => download("pdf")}
             >
               Download PDF
@@ -504,7 +521,7 @@ export function HearingReportTool() {
               <button
                 type="button"
                 className={`${ui.btn} ${ui.btnSmall} ${styles.action} ${styles.actionOutline}`}
-                disabled={!fontsReady}
+                disabled={!fontsReady || !logoImage}
                 onClick={share}
               >
                 Share PDF
@@ -516,14 +533,16 @@ export function HearingReportTool() {
             <button
               type="button"
               className={styles.linkButton}
-              disabled={!fontsReady}
+              disabled={!fontsReady || !logoImage}
               onClick={() => download("jpg")}
             >
               Download as JPEG image
             </button>
           </p>
           <p className={styles.statusMessage} aria-live="polite">
-            {status}
+            {logoFailed
+              ? "The clinic logo couldn't be loaded. Reload the page before creating a report."
+              : status}
           </p>
 
         </div>

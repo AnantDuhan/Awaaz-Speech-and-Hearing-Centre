@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { LOGO_BUBBLE_PATH } from "@/components/Logo";
+import { SPEECH_BUBBLE_PATH } from "@/components/Logo";
 import { links } from "@/content/site";
 import ui from "@/styles/ui.module.css";
 import styles from "./not-found.module.css";
@@ -68,7 +68,7 @@ export default function NotFound() {
             <span className={`${styles.dot} ${styles.dotMint}`} />
             <span className={`${styles.dot} ${styles.dotCoral}`} />
             <svg viewBox="0 0 64 64" className={styles.bubble} focusable="false">
-              <path d={LOGO_BUBBLE_PATH} className={styles.bubbleShape} />
+              <path d={SPEECH_BUBBLE_PATH} className={styles.bubbleShape} />
               <text x="32" y="25" textAnchor="middle" dominantBaseline="central" className={styles.bubbleText}>
                 404
               </text>

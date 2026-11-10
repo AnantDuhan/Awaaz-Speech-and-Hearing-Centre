@@ -8,7 +8,6 @@
  *   Left:  AC ✕, AC masked □, BC >, BC masked ]
  *   No response: an arrow pointing down and away from the symbol.
  */
-import { LOGO_AA_PATH, LOGO_BUBBLE_PATH } from "@/components/Logo";
 import {
   ALL_FREQUENCIES,
   BC_FREQUENCIES,
@@ -65,10 +64,12 @@ export function drawReport(
   data: ReportData,
   clinic: ClinicInfo,
   options: { scale: number; fontFamily: string },
+  logoImage: HTMLImageElement,
 ): { overflow: boolean } {
   const W = PAGE.width;
   const H = PAGE.height;
   const M = 58;
+  const logoWidth = (68 * logoImage.naturalWidth) / logoImage.naturalHeight;
   canvas.width = W * options.scale;
   canvas.height = H * options.scale;
   const ctx = canvas.getContext("2d");
@@ -132,12 +133,7 @@ export function drawReport(
   const orDash = (value: string) => (value.trim() ? value.trim() : "—");
 // ---------------- header ----------------
   ctx.save();
-  ctx.translate(M - 4, 40);
-  ctx.scale(68 / 64, 68 / 64);
-  ctx.fillStyle = C.navy;
-  ctx.fill(new Path2D(LOGO_BUBBLE_PATH));
-  ctx.fillStyle = C.yellow;
-  ctx.fill(new Path2D(LOGO_AA_PATH));
+  ctx.drawImage(logoImage, M - 4, 40, logoWidth, 68);
   ctx.restore();
   const headerTextX = M + 82;
   write(fit(clinic.name, 720, 30, 900), headerTextX, 84, 30, 900, C.navy);

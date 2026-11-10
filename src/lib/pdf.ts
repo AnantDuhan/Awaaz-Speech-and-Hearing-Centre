@@ -3,7 +3,7 @@
  * The JPEG is embedded as-is (DCTDecode), so the PDF matches the preview exactly.
  */
 
-const A4 = { width: 595.28, height: 841.89 }; // points
+const A4 = { width: 841.89, height: 595.28 }; // A4 landscape, points
 
 /** PDF text string as UTF-16BE hex, so any name (including Devanagari) is stored safely. */
 function pdfText(text: string) {

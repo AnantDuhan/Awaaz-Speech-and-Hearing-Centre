@@ -65,7 +65,7 @@ export function isInvalid(point: Point | undefined) {
 type Band = { label: string; /** inclusive upper limit; Infinity for the last band */ max: number; strict?: boolean };
 
 export type Scale = {
-  id: "goodman" | "who";
+  id: "who";
   name: string;
   short: string;
   frequencies: number[];
@@ -75,21 +75,6 @@ export type Scale = {
 };
 
 export const SCALES: Record<Scale["id"], Scale> = {
-  goodman: {
-    id: "goodman",
-    name: "Goodman (1965)",
-    short: "Goodman (1965), PTA of 0.5, 1 and 2 kHz",
-    frequencies: [500, 1000, 2000],
-    normalLimit: 25,
-    bands: [
-      { label: "Normal hearing", max: 25 },
-      { label: "Mild hearing loss", max: 40 },
-      { label: "Moderate hearing loss", max: 55 },
-      { label: "Moderately severe hearing loss", max: 70 },
-      { label: "Severe hearing loss", max: 90 },
-      { label: "Profound hearing loss", max: Infinity },
-    ],
-  },
   who: {
     id: "who",
     name: "WHO (2021)",

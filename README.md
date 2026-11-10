@@ -34,8 +34,8 @@ To add another staff tool later, add a page under `src/app/tools/` and an entry 
 Open `/tools` (or `/tools/hearing-report` directly). Neither is linked anywhere on the public site or listed in the sitemap, and both are always `noindex`, even after launch.
 
 - **Private:** everything runs in the browser. Nothing is saved or sent, and closing the page clears it.
-- **Output:** a one-page A4 PDF, drawn at 300 dpi, with right and left audiograms in standard ASHA symbols, PTA, degree of hearing loss, speech audiometry, tympanometry, impression and recommendations. On phones, "Share PDF" sends it straight to WhatsApp. A JPEG download is also offered. The PDF holds the page as one image (`src/lib/pdf.ts`, no library), so its text isn't selectable.
-- **Grading:** Goodman (1965, PTA of 0.5/1/2 kHz) or WHO (2021, PTA of 0.5/1/2/4 kHz), chosen per report. The audiologist should confirm which one the clinic uses.
+- **Output:** a one-page A4 landscape PDF, drawn at 300 dpi, with left and right audiograms in standard ASHA symbols, PTA, mobile number and address. On phones, "Share PDF" sends it straight to WhatsApp. A JPEG download is also offered. The PDF holds the page as one image (`src/lib/pdf.ts`, no library), so its text isn't selectable.
+- **Grading:** WHO (2021), using PTA of 0.5/1/2/4 kHz.
 - **Not a secure system:** anyone with the address can open the tool and make a report-looking image. The report number and "call to verify" line are the safeguard. For real access control, move it behind a login.
 - **Logic** is in `src/lib/audiometry.ts`, and the drawing is in `src/lib/renderReport.ts`.
 

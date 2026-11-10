@@ -1,6 +1,6 @@
 /**
  * Draws the hearing test report onto a <canvas>, entirely in the browser.
- * The page is A4 (1240 × 1754 at 150 dpi); downloads are drawn at 2× (300 dpi).
+ * The page is A4 landscape (1754 × 1240 at 150 dpi); downloads are drawn at 2× (300 dpi).
  *
  * Audiogram conventions (ASHA): right ear red, left ear blue; 20 dB on the
  * y-axis spans the same distance as one octave on the x-axis.
@@ -14,7 +14,6 @@ import {
   BC_FREQUENCIES,
   type Ear,
   formatDb,
-  formatFrequency,
   MAX_DB,
   MIN_DB,
   OCTAVE_FREQUENCIES,
@@ -25,7 +24,7 @@ import {
   type Thresholds,
 } from "./audiometry";
 
-export const PAGE = { width: 1240, height: 1754 };
+export const PAGE = { width: 1754, height: 1240 };
 
 export type ReportData = {
   reportNo: string;
@@ -36,14 +35,11 @@ export type ReportData = {
     sex: string;
     id: string;
     referredBy: string;
-    complaint: string;
+    mobile: string;
+    address: string;
   };
   scaleId: Scale["id"];
   thresholds: Thresholds;
-  speech: { srt: Record<Ear, string>; sds: Record<Ear, string> };
-  tympanometry: { type: Record<Ear, string>; reflexes: Record<Ear, string> };
-  impression: string;
-  recommendations: string;
   audiologist: { name: string; qualification: string; registration: string };
 };
 
@@ -79,7 +75,7 @@ export function drawReport(
 ): { overflow: boolean } {
   const W = PAGE.width;
   const H = PAGE.height;
-  const M = 64;
+  const M = 58;
   canvas.width = W * options.scale;
   canvas.height = H * options.scale;
 
@@ -94,7 +90,7 @@ export function drawReport(
     right: pureToneAverage(data.thresholds, "right", scale),
     left: pureToneAverage(data.thresholds, "left", scale),
   };
-  let overflow = false;
+
 
   /* ---------------- text helpers ---------------- */
 
@@ -129,37 +125,6 @@ export function drawReport(
     while (cut.length > 1 && ctx.measureText(`${cut}…`).width > maxWidth) cut = cut.slice(0, -1);
     return `${cut.trimEnd()}…`;
   };
-  const wrap = (text: string, maxWidth: number, size: number, weight: number) => {
-    setFont(size, weight);
-    const lines: string[] = [];
-    for (const paragraph of text.split(/\r?\n/)) {
-      const words = paragraph.split(/\s+/).filter(Boolean);
-      if (words.length === 0) {
-        lines.push("");
-        continue;
-      }
-      let line = "";
-      for (const word of words) {
-        const candidate = line ? `${line} ${word}` : word;
-        if (ctx.measureText(candidate).width <= maxWidth) {
-          line = candidate;
-          continue;
-        }
-        if (line) lines.push(line);
-        let rest = word;
-        while (ctx.measureText(rest).width > maxWidth) {
-          let i = rest.length;
-          while (i > 1 && ctx.measureText(rest.slice(0, i)).width > maxWidth) i--;
-          lines.push(rest.slice(0, i));
-          rest = rest.slice(i);
-        }
-        line = rest;
-      }
-      lines.push(line);
-    }
-    while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
-    return lines;
-  };
   const line = (x1: number, y1: number, x2: number, y2: number) => {
     ctx.beginPath();
     ctx.moveTo(x1, y1);
@@ -190,7 +155,7 @@ export function drawReport(
 
   const headerTextX = M + 82;
   write(fit(clinic.name, 720, 30, 900), headerTextX, 84, 30, 900, C.navy);
-  write(fit(`${clinic.address}  ·  ${clinic.phone}`, 760, 15, 600), headerTextX, 112, 15, 600, C.muted);
+  write(fit(`${clinic.address}  ·  ${clinic.phone}`, 1080, 15, 600), headerTextX, 112, 15, 600, C.muted);
 
   write("REPORT NO.", W - M, 74, 12, 800, C.faint, "right", 1.2);
   write(fit(orDash(data.reportNo), 220, 18, 800), W - M, 100, 18, 800, C.ink, "right");
@@ -202,29 +167,30 @@ export function drawReport(
 
   /* ---------------- patient details ---------------- */
 
-  const boxTop = 206;
-  const boxHeight = 128;
+  const boxTop = 190;
+  const boxHeight = 104;
   roundRect(M, boxTop, W - 2 * M, boxHeight, 16);
   ctx.fillStyle = C.tint;
   ctx.fill();
 
   const age = data.patient.age.trim();
   const ageText = age ? (/^\d+$/.test(age) ? `${age} yrs` : age) : "—";
-  // Four columns; the complaint spans three so it isn't cut short.
+  // Four columns across two compact rows.
   const cells: { label: string; value: string; column: number; row: number; span: number }[] = [
     { label: "Patient name", value: orDash(data.patient.name), column: 0, row: 0, span: 1 },
     { label: "Age / Sex", value: `${ageText} / ${orDash(data.patient.sex)}`, column: 1, row: 0, span: 1 },
     { label: "Patient ID", value: orDash(data.patient.id), column: 2, row: 0, span: 1 },
     { label: "Date of test", value: data.testDate ? formatDate(data.testDate) : "—", column: 3, row: 0, span: 1 },
     { label: "Referred by", value: orDash(data.patient.referredBy), column: 0, row: 1, span: 1 },
-    { label: "Complaint", value: orDash(data.patient.complaint), column: 1, row: 1, span: 3 },
+    { label: "Mobile", value: orDash(data.patient.mobile), column: 1, row: 1, span: 1 },
+    { label: "Address", value: orDash(data.patient.address), column: 2, row: 1, span: 2 },
   ];
   const cellWidth = (W - 2 * M - 48) / 4;
   for (const cell of cells) {
     const x = M + 24 + cell.column * cellWidth;
-    const y = boxTop + 30 + cell.row * 60;
+    const y = boxTop + 24 + cell.row * 42;
     write(cell.label.toUpperCase(), x, y, 11.5, 800, C.faint, "left", 1);
-    write(fit(cell.value, cellWidth * cell.span - 20, 18, 800), x, y + 24, 18, 800, C.ink);
+    write(fit(cell.value, cellWidth * cell.span - 20, 16, 800), x, y + 20, 16, 800, C.ink);
   }
 
   /* ---------------- audiograms ---------------- */
@@ -298,16 +264,17 @@ export function drawReport(
     ctx.restore();
   };
 
-  const panelTop = 362;
-  const panelGap = 40;
+  const panelTop = 312;
+  const panelGap = 54;
   const panelWidth = (W - 2 * M - panelGap) / 2;
   let panelBottom = 0;
 
   const drawAudiogram = (ear: Ear, px: number) => {
     const color = EAR_COLOR[ear];
-    const left = px + 58;
-    const width = panelWidth - 58 - 8;
-    const unit = width / 7; // one octave
+    const availableWidth = panelWidth - 58 - 8;
+    const unit = Math.min(availableWidth / 7, 62); // preserve 20 dB per octave on landscape paper
+    const width = unit * 7;
+    const left = px + (panelWidth - width) / 2;
     const top = panelTop + 34;
     const height = unit * ((MAX_DB - MIN_DB) / 20);
     const lowest = Math.log2(125) - 0.5;
@@ -335,17 +302,17 @@ export function drawReport(
     }
     for (const hz of ALL_FREQUENCIES) {
       const octave = OCTAVE_FREQUENCIES.includes(hz);
-      ctx.strokeStyle = C.grid;
-      ctx.setLineDash(octave ? [] : [3, 4]);
-      line(xFor(hz), top, xFor(hz), top + height);
+      ctx.strokeStyle = octave ? C.gridStrong : C.grid;
       ctx.setLineDash([]);
-      if (octave) write(formatFrequency(hz), xFor(hz), top + height + 21, 12.5, 700, C.muted, "center");
+      line(xFor(hz), top, xFor(hz), top + height);
+      const labelY = top + height + (ALL_FREQUENCIES.indexOf(hz) % 2 === 0 ? 20 : 36);
+      write(String(hz), xFor(hz), labelY, 10.5, 700, C.muted, "center");
     }
     ctx.strokeStyle = C.gridStrong;
     ctx.lineWidth = 1.5;
     ctx.strokeRect(left, top, width, height);
 
-    write("Frequency (Hz)", left + width / 2, top + height + 43, 12.5, 800, C.ink, "center");
+    write("Frequency (Hz)", left + width / 2, top + height + 59, 12.5, 800, C.ink, "center");
     ctx.save();
     ctx.translate(px + 12, top + height / 2);
     ctx.rotate(-Math.PI / 2);
@@ -388,7 +355,7 @@ export function drawReport(
     }
 
     // Legend for this ear
-    const legendY = top + height + 76;
+    const legendY = top + height + 96;
     let lx = left;
     const items: { kind: "ac" | "bc" | "nr"; masked: boolean; label: string }[] = [
       { kind: "ac", masked: false, label: "AC" },
@@ -411,8 +378,8 @@ export function drawReport(
     panelBottom = Math.max(panelBottom, legendY);
   };
 
-  drawAudiogram("right", M);
-  drawAudiogram("left", M + panelWidth + panelGap);
+  drawAudiogram("left", M);
+  drawAudiogram("right", M + panelWidth + panelGap);
 
   /* ---------------- results table ---------------- */
 
@@ -420,44 +387,11 @@ export function drawReport(
     const result = pta[ear];
     return result.ok ? `${formatDb(result.value)} dB HL` : "—";
   };
-  const degreeText = (ear: Ear) => {
-    const result = pta[ear];
-    return result.ok ? result.degree : `Not calculated (${result.reason})`;
-  };
-  const both = (pair: Record<Ear, string>) => pair.right.trim() !== "" || pair.left.trim() !== "";
-  const unitValue = (value: string, unit: string) => (value.trim() ? `${value.trim()}${unit}` : "—");
-
   const rows: [string, string, string][] = [
-    ["Pure-tone average (PTA)", ptaText("right"), ptaText("left")],
-    [`Degree (${scale.name})`, degreeText("right"), degreeText("left")],
+    ["Pure-tone average (PTA)", ptaText("left"), ptaText("right")],
   ];
-  if (both(data.speech.srt)) {
-    rows.push([
-      "Speech reception threshold (SRT)",
-      unitValue(data.speech.srt.right, " dB HL"),
-      unitValue(data.speech.srt.left, " dB HL"),
-    ]);
-  }
-  if (both(data.speech.sds)) {
-    rows.push([
-      "Speech discrimination score (SDS)",
-      unitValue(data.speech.sds.right, "%"),
-      unitValue(data.speech.sds.left, "%"),
-    ]);
-  }
-  if (both(data.tympanometry.type)) {
-    const typeText = (v: string) => (v ? `Type ${v}` : "—");
-    rows.push(["Tympanogram", typeText(data.tympanometry.type.right), typeText(data.tympanometry.type.left)]);
-  }
-  if (both(data.tympanometry.reflexes)) {
-    rows.push([
-      "Acoustic reflexes",
-      orDash(data.tympanometry.reflexes.right),
-      orDash(data.tympanometry.reflexes.left),
-    ]);
-  }
 
-  const tableTop = panelBottom + 30;
+  const tableTop = panelBottom + 24;
   const rowHeight = 36;
   const labelWidth = 400;
   const valueWidth = (W - 2 * M - labelWidth) / 2;
@@ -465,9 +399,9 @@ export function drawReport(
   ctx.fillStyle = C.tint;
   ctx.fill();
   write("RESULT", M + 16, tableTop + 23, 12, 800, C.faint, "left", 1);
-  write("RIGHT EAR", M + labelWidth + 16, tableTop + 23, 12.5, 900, EAR_COLOR.right, "left", 1);
-  write("LEFT EAR", M + labelWidth + valueWidth + 16, tableTop + 23, 12.5, 900, EAR_COLOR.left, "left", 1);
-  rows.forEach(([label, right, left], i) => {
+  write("LEFT EAR", M + labelWidth + 16, tableTop + 23, 12.5, 900, EAR_COLOR.left, "left", 1);
+  write("RIGHT EAR", M + labelWidth + valueWidth + 16, tableTop + 23, 12.5, 900, EAR_COLOR.right, "left", 1);
+  rows.forEach(([label, left, right], i) => {
     const y = tableTop + rowHeight * (i + 1);
     ctx.strokeStyle = C.grid;
     ctx.lineWidth = 1;
@@ -475,68 +409,40 @@ export function drawReport(
     write(fit(label, labelWidth - 28, 15, 700), M + 16, y + 24, 15, 700, C.muted);
     const notCalculated = (v: string) => v.startsWith("Not calculated");
     write(
-      fit(right, valueWidth - 28, notCalculated(right) ? 13.5 : 16, notCalculated(right) ? 700 : 800),
-      M + labelWidth + 16,
-      y + 24,
-      notCalculated(right) ? 13.5 : 16,
-      notCalculated(right) ? 700 : 800,
-      notCalculated(right) ? C.faint : C.ink,
-    );
-    write(
       fit(left, valueWidth - 28, notCalculated(left) ? 13.5 : 16, notCalculated(left) ? 700 : 800),
-      M + labelWidth + valueWidth + 16,
+      M + labelWidth + 16,
       y + 24,
       notCalculated(left) ? 13.5 : 16,
       notCalculated(left) ? 700 : 800,
       notCalculated(left) ? C.faint : C.ink,
     );
+    write(
+      fit(right, valueWidth - 28, notCalculated(right) ? 13.5 : 16, notCalculated(right) ? 700 : 800),
+      M + labelWidth + valueWidth + 16,
+      y + 24,
+      notCalculated(right) ? 13.5 : 16,
+      notCalculated(right) ? 700 : 800,
+      notCalculated(right) ? C.faint : C.ink,
+    );
   });
-
-  /* ---------------- impression & recommendations ---------------- */
-
-  const signatureTop = H - 232;
-  let y = tableTop + rowHeight * (rows.length + 1) + 34;
-  const lineHeight = 23;
-  for (const [title, body] of [
-    ["IMPRESSION", data.impression],
-    ["RECOMMENDATIONS", data.recommendations],
-  ] as const) {
-    if (!body.trim()) continue;
-    const available = signatureTop - 20 - (y + 24);
-    const maxLines = Math.max(0, Math.floor(available / lineHeight));
-    if (maxLines < 1) {
-      overflow = true;
-      break;
-    }
-    write(title, M, y, 12.5, 900, C.navy, "left", 1.2);
-    let lines = wrap(body, W - 2 * M, 16, 600);
-    if (lines.length > maxLines) {
-      overflow = true;
-      lines = lines.slice(0, maxLines);
-      lines[maxLines - 1] = fit(`${lines[maxLines - 1]}…`, W - 2 * M, 16, 600);
-    }
-    lines.forEach((text, i) => write(text, M, y + 26 + i * lineHeight, 16, 600, C.ink));
-    y += 26 + lines.length * lineHeight + 24;
-  }
 
   /* ---------------- signature & footer ---------------- */
 
-  write("Hearing loss grading", M, signatureTop + 46, 12, 800, C.faint, "left", 0.5);
-  write(scale.short, M, signatureTop + 68, 14, 700, C.muted);
-  write("AC = air conduction · BC = bone conduction", M, signatureTop + 90, 14, 700, C.muted);
-  write("Audiogram symbols follow ASHA conventions", M, signatureTop + 112, 14, 700, C.muted);
+  const signatureTop = 1000;
+  write("AC = air conduction · BC = bone conduction", M, signatureTop + 75, 13, 700, C.muted);
+  write("Audiogram symbols follow ASHA conventions", M, signatureTop + 96, 13, 700, C.muted);
 
   const sigLeft = W - M - 330;
   ctx.strokeStyle = C.ink;
   ctx.lineWidth = 1.2;
-  line(sigLeft, signatureTop + 56, W - M, signatureTop + 56);
-  write("Signature", W - M, signatureTop + 74, 11.5, 700, C.faint, "right");
-  write(fit(orDash(data.audiologist.name), 330, 17, 800), W - M, signatureTop + 102, 17, 800, C.ink, "right");
-  write(fit(orDash(data.audiologist.qualification), 330, 14, 600), W - M, signatureTop + 124, 14, 600, C.muted, "right");
+  line(sigLeft, signatureTop + 48, W - M, signatureTop + 48);
+  write("Signature", W - M, signatureTop + 65, 11.5, 700, C.faint, "right");
+  write(fit(orDash(data.audiologist.name), 330, 17, 800), W - M, signatureTop + 88, 17, 800, C.ink, "right");
+  write(fit(orDash(data.audiologist.qualification), 330, 14, 600), W - M, signatureTop + 108, 14, 600, C.muted, "right");
   write(
     fit(`Reg. no. ${orDash(data.audiologist.registration)}`, 330, 14, 600),
     W - M,
-    signatureTop + 146,
+    signatureTop + 128,
     14,
     600,
     C.muted,
@@ -545,7 +451,7 @@ export function drawReport(
 
   ctx.strokeStyle = C.grid;
   ctx.lineWidth = 1;
-  line(M, H - 78, W - M, H - 78);
+  line(M, H - 72, W - M, H - 72);
   write(
     fit(
       "This report should be read with the clinical findings by a qualified audiologist or ENT doctor.",
@@ -554,7 +460,7 @@ export function drawReport(
       600,
     ),
     M,
-    H - 54,
+    H - 40,
     12.5,
     600,
     C.faint,
@@ -562,11 +468,11 @@ export function drawReport(
   write(
     fit(`To verify this report, call ${clinic.phone} and quote the report number.`, W - 2 * M, 12.5, 700),
     M,
-    H - 32,
+    H - 19,
     12.5,
     700,
     C.muted,
   );
 
-  return { overflow };
+  return { overflow: false };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { fullAddress, site, team } from "@/content/site";
 import {
   ALL_FREQUENCIES,
@@ -8,10 +8,8 @@ import {
   type Conduction,
   type Ear,
   emptyThresholds,
-  EXTRA_FREQUENCIES,
   formatDb,
   isInvalid,
-  MAIN_FREQUENCIES,
   MAX_DB,
   MIN_DB,
   type PointStatus,
@@ -28,11 +26,9 @@ import styles from "./HearingReportTool.module.css";
 
 const CLINIC: ClinicInfo = { name: site.name, address: fullAddress, phone: site.phone.display };
 const REPORT_PREFIX = "AWZ";
-const EARS: Ear[] = ["right", "left"];
+const EARS: Ear[] = ["left", "right"];
 const EAR_LABEL: Record<Ear, string> = { right: "Right ear", left: "Left ear" };
 const KIND_LABEL: Record<Conduction, string> = { ac: "air conduction", bc: "bone conduction" };
-const TYMPANOGRAM_TYPES = ["", "A", "As", "Ad", "B", "C"];
-const REFLEX_OPTIONS = ["", "Present", "Absent", "Elevated", "Not tested"];
 
 const isPlaceholder = (value: string) => /\[.*\]/.test(value);
 
@@ -52,17 +48,13 @@ function blankReport(): ReportData {
   return {
     reportNo: newReportNo(),
     testDate: today(),
-    patient: { name: "", age: "", sex: "", id: "", referredBy: "", complaint: "" },
-    scaleId: "goodman",
+    patient: { name: "", age: "", sex: "", id: "", referredBy: "", mobile: "", address: "" },
+    scaleId: "who",
     thresholds: emptyThresholds(),
-    speech: { srt: { right: "", left: "" }, sds: { right: "", left: "" } },
-    tympanometry: { type: { right: "", left: "" }, reflexes: { right: "", left: "" } },
-    impression: "",
-    recommendations: "",
     audiologist: {
-      name: real(member?.name),
+      name: "Pushpak Kumar",
       qualification: real(member?.qualification),
-      registration: real(member?.registration),
+      registration: "A81403",
     },
   };
 }
@@ -88,26 +80,14 @@ function exampleReport(): ReportData {
     sex: "Male",
     id: "DEMO-001",
     referredBy: "Dr. Example (ENT)",
-    complaint: "Reduced hearing in the right ear for six months",
+    mobile: "9876543210",
+    address: "Sample address",
   };
   const t = report.thresholds;
   setPoints(t, "right", "ac", { 250: 40, 500: 40, 1000: 45, 2000: 45, 4000: 50, 8000: 55 });
   setPoints(t, "right", "bc", { 250: 10, 500: [15, "masked"], 1000: [15, "masked"], 2000: [20, "masked"], 4000: 25 });
   setPoints(t, "left", "ac", { 250: 15, 500: 15, 1000: 20, 2000: 20, 4000: 25, 8000: 30 });
   setPoints(t, "left", "bc", { 500: 10, 1000: 15, 2000: 15, 4000: 20 });
-  report.speech = { srt: { right: "45", left: "20" }, sds: { right: "92", left: "100" } };
-  report.tympanometry = { type: { right: "B", left: "A" }, reflexes: { right: "Absent", left: "Present" } };
-  report.impression =
-    "Right ear: moderate conductive hearing loss. Left ear: hearing within normal limits.";
-  report.recommendations =
-    "ENT consultation for the right ear. Repeat hearing test after medical management. Keep water out of the right ear.";
-  if (!report.audiologist.name) {
-    report.audiologist = {
-      name: "Example Audiologist",
-      qualification: "BASLP",
-      registration: "A00000",
-    };
-  }
   return report;
 }
 
@@ -134,12 +114,10 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 export function HearingReportTool() {
   const [data, setData] = useState<ReportData>(blankReport);
-  const [showExtra, setShowExtra] = useState(false);
   const [fontFamily] = useState(
     () => getComputedStyle(document.body).fontFamily || "system-ui, sans-serif",
   );
   const [fontsReady, setFontsReady] = useState(false);
-  const [overflow, setOverflow] = useState(false);
   const [status, setStatus] = useState("");
   const [canShare] = useState(() => {
     try {
@@ -180,7 +158,7 @@ export function HearingReportTool() {
     const frame = requestAnimationFrame(() => {
       const canvas = previewRef.current;
       if (!canvas) return;
-      setOverflow(drawReport(canvas, data, CLINIC, { scale: 1, fontFamily }).overflow);
+      drawReport(canvas, data, CLINIC, { scale: 1, fontFamily });
     });
     return () => cancelAnimationFrame(frame);
   }, [data, fontsReady, fontFamily]);
@@ -191,16 +169,7 @@ export function HearingReportTool() {
     left: pureToneAverage(data.thresholds, "left", scale),
   };
 
-  const hasExtraValues = useMemo(
-    () =>
-      EXTRA_FREQUENCIES.some((hz) =>
-        EARS.some(
-          (ear) => data.thresholds[ear].ac[hz]?.value || data.thresholds[ear].bc[hz]?.value,
-        ),
-      ),
-    [data.thresholds],
-  );
-  const frequencies = showExtra || hasExtraValues ? ALL_FREQUENCIES : MAIN_FREQUENCIES;
+  const frequencies = ALL_FREQUENCIES;
 
   const invalidCount = EARS.reduce(
     (count, ear) =>
@@ -210,7 +179,7 @@ export function HearingReportTool() {
     0,
   );
 
-  /** Draws the report at 300 dpi (2480 × 3508) and returns it as a JPEG. */
+  /** Draws the A4 landscape report at 300 dpi and returns it as a JPEG. */
   const renderJpeg = () =>
     new Promise<{ blob: Blob; width: number; height: number } | null>((resolve) => {
       const canvas = document.createElement("canvas");
@@ -357,15 +326,14 @@ export function HearingReportTool() {
               />
             </Field>
           </div>
-          <Field label="Complaint">
-            <input
-              className={styles.input}
-              value={data.patient.complaint}
-              maxLength={90}
-              autoComplete="off"
-              onChange={(e) => update((d) => void (d.patient.complaint = e.target.value))}
-            />
-          </Field>
+          <div className={styles.grid}>
+            <Field label="Mobile number">
+              <input className={styles.input} type="tel" value={data.patient.mobile} maxLength={20} autoComplete="tel" onChange={(e) => update((d) => void (d.patient.mobile = e.target.value))} />
+            </Field>
+            <Field label="Address">
+              <input className={styles.input} value={data.patient.address} maxLength={120} autoComplete="street-address" onChange={(e) => update((d) => void (d.patient.address = e.target.value))} />
+            </Field>
+          </div>
         </fieldset>
 
         <fieldset className={styles.section}>
@@ -380,17 +348,17 @@ export function HearingReportTool() {
               <thead>
                 <tr>
                   <th scope="col">Hz</th>
-                  <th scope="col" className={styles.right}>Right AC</th>
-                  <th scope="col" className={styles.right}>Right BC</th>
                   <th scope="col" className={styles.left}>Left AC</th>
                   <th scope="col" className={styles.left}>Left BC</th>
+                  <th scope="col" className={styles.right}>Right AC</th>
+                  <th scope="col" className={styles.right}>Right BC</th>
                 </tr>
               </thead>
               <tbody>
                 {frequencies.map((hz) => (
                   <tr key={hz}>
                     <th scope="row">{hz}</th>
-                    {(["right", "left"] as Ear[]).flatMap((ear) =>
+                    {(["left", "right"] as Ear[]).flatMap((ear) =>
                       (["ac", "bc"] as Conduction[]).map((kind) => {
                         if (kind === "bc" && !BC_FREQUENCIES.includes(hz)) {
                           return (
@@ -445,16 +413,6 @@ export function HearingReportTool() {
               </tbody>
             </table>
           </div>
-          <label className={styles.check}>
-            <input
-              type="checkbox"
-              checked={showExtra || hasExtraValues}
-              disabled={hasExtraValues}
-              onChange={(e) => setShowExtra(e.target.checked)}
-            />
-            Show 125, 750, 1500, 3000 and 6000 Hz
-            {hasExtraValues ? <span className={styles.hint}> (clear those values to hide them)</span> : null}
-          </label>
           {invalidCount > 0 ? (
             <p className={styles.warning} role="alert">
               {invalidCount} value{invalidCount === 1 ? " is" : "s are"} outside {MIN_DB} to {MAX_DB} dB HL
@@ -464,7 +422,7 @@ export function HearingReportTool() {
 
           <div className={styles.scale} role="radiogroup" aria-label="Hearing loss grading">
             <span className={styles.label}>Hearing loss grading</span>
-            {Object.values(SCALES).map((option) => (
+            {[SCALES.who].map((option) => (
               <label key={option.id} className={styles.radio}>
                 <input
                   type="radio"
@@ -492,104 +450,14 @@ export function HearingReportTool() {
         </fieldset>
 
         <fieldset className={styles.section}>
-          <legend className={styles.legend}>Speech audiometry (optional)</legend>
-          <div className={styles.grid}>
-            {EARS.map((ear) => (
-              <Field key={`srt-${ear}`} label={`SRT, ${EAR_LABEL[ear].toLowerCase()} (dB HL)`}>
-                <input
-                  className={styles.input}
-                  type="number"
-                  inputMode="numeric"
-                  min={MIN_DB}
-                  max={MAX_DB}
-                  value={data.speech.srt[ear]}
-                  onChange={(e) => update((d) => void (d.speech.srt[ear] = e.target.value))}
-                />
-              </Field>
-            ))}
-            {EARS.map((ear) => (
-              <Field key={`sds-${ear}`} label={`SDS, ${EAR_LABEL[ear].toLowerCase()} (%)`}>
-                <input
-                  className={styles.input}
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={100}
-                  value={data.speech.sds[ear]}
-                  onChange={(e) => update((d) => void (d.speech.sds[ear] = e.target.value))}
-                />
-              </Field>
-            ))}
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.section}>
-          <legend className={styles.legend}>Tympanometry (optional)</legend>
-          <div className={styles.grid}>
-            {EARS.map((ear) => (
-              <Field key={`tymp-${ear}`} label={`Tympanogram, ${EAR_LABEL[ear].toLowerCase()}`}>
-                <select
-                  className={styles.input}
-                  value={data.tympanometry.type[ear]}
-                  onChange={(e) => update((d) => void (d.tympanometry.type[ear] = e.target.value))}
-                >
-                  {TYMPANOGRAM_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type ? `Type ${type}` : "—"}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            ))}
-            {EARS.map((ear) => (
-              <Field key={`reflex-${ear}`} label={`Acoustic reflexes, ${EAR_LABEL[ear].toLowerCase()}`}>
-                <select
-                  className={styles.input}
-                  value={data.tympanometry.reflexes[ear]}
-                  onChange={(e) => update((d) => void (d.tympanometry.reflexes[ear] = e.target.value))}
-                >
-                  {REFLEX_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option || "—"}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            ))}
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.section}>
-          <legend className={styles.legend}>Findings</legend>
-          <Field label="Impression" hint={`${data.impression.length}/400`}>
-            <textarea
-              className={styles.textarea}
-              rows={3}
-              maxLength={400}
-              value={data.impression}
-              onChange={(e) => update((d) => void (d.impression = e.target.value))}
-            />
-          </Field>
-          <Field label="Recommendations" hint={`${data.recommendations.length}/400`}>
-            <textarea
-              className={styles.textarea}
-              rows={3}
-              maxLength={400}
-              value={data.recommendations}
-              onChange={(e) => update((d) => void (d.recommendations = e.target.value))}
-            />
-          </Field>
-        </fieldset>
-
-        <fieldset className={styles.section}>
           <legend className={styles.legend}>Audiologist and report</legend>
           <div className={styles.grid}>
             <Field label="Name">
               <input
                 className={styles.input}
-                value={data.audiologist.name}
+                value="Pushpak Kumar"
+                readOnly
                 maxLength={50}
-                onChange={(e) => update((d) => void (d.audiologist.name = e.target.value))}
               />
             </Field>
             <Field label="Qualification">
@@ -603,9 +471,9 @@ export function HearingReportTool() {
             <Field label="Registration no.">
               <input
                 className={styles.input}
-                value={data.audiologist.registration}
+                value="A81403"
+                readOnly
                 maxLength={30}
-                onChange={(e) => update((d) => void (d.audiologist.registration = e.target.value))}
               />
             </Field>
             <Field label="Report no.">
@@ -657,12 +525,7 @@ export function HearingReportTool() {
           <p className={styles.statusMessage} aria-live="polite">
             {status}
           </p>
-          {overflow ? (
-            <p className={styles.warning} role="alert">
-              The impression or recommendations are too long for one page and have been cut short.
-              Please shorten them.
-            </p>
-          ) : null}
+
         </div>
         <canvas
           ref={previewRef}

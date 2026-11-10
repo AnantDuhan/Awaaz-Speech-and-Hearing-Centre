@@ -344,7 +344,7 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 1240 / 1754;
+  aspect-ratio: 1754 / 1240;
   border: 2px solid var(--border);
   border-radius: 12px;
   background: #ffffff;

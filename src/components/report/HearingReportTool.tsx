@@ -26,7 +26,7 @@ import styles from "./HearingReportTool.module.css";
 
 const CLINIC: ClinicInfo = { name: site.name, address: fullAddress, phone: site.phone.display };
 const REPORT_PREFIX = "AWZ";
-const EARS: Ear[] = ["right", "left"];
+const EARS: Ear[] = ["left", "right"];
 const EAR_LABEL: Record<Ear, string> = { right: "Right ear", left: "Left ear" };
 const KIND_LABEL: Record<Conduction, string> = { ac: "air conduction", bc: "bone conduction" };
 
@@ -118,7 +118,6 @@ export function HearingReportTool() {
     () => getComputedStyle(document.body).fontFamily || "system-ui, sans-serif",
   );
   const [fontsReady, setFontsReady] = useState(false);
-  const [overflow, setOverflow] = useState(false);
   const [status, setStatus] = useState("");
   const [canShare] = useState(() => {
     try {
@@ -159,7 +158,7 @@ export function HearingReportTool() {
     const frame = requestAnimationFrame(() => {
       const canvas = previewRef.current;
       if (!canvas) return;
-      setOverflow(drawReport(canvas, data, CLINIC, { scale: 1, fontFamily }).overflow);
+      drawReport(canvas, data, CLINIC, { scale: 1, fontFamily });
     });
     return () => cancelAnimationFrame(frame);
   }, [data, fontsReady, fontFamily]);
@@ -349,10 +348,10 @@ export function HearingReportTool() {
               <thead>
                 <tr>
                   <th scope="col">Hz</th>
-                  <th scope="col" className={styles.right}>Right AC</th>
-                  <th scope="col" className={styles.right}>Right BC</th>
                   <th scope="col" className={styles.left}>Left AC</th>
                   <th scope="col" className={styles.left}>Left BC</th>
+                  <th scope="col" className={styles.right}>Right AC</th>
+                  <th scope="col" className={styles.right}>Right BC</th>
                 </tr>
               </thead>
               <tbody>

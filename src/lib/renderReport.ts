@@ -14,7 +14,6 @@ import {
   BC_FREQUENCIES,
   type Ear,
   formatDb,
-  formatFrequency,
   MAX_DB,
   MIN_DB,
   OCTAVE_FREQUENCIES,
@@ -410,20 +409,20 @@ export function drawReport(
     write(fit(label, labelWidth - 28, 15, 700), M + 16, y + 24, 15, 700, C.muted);
     const notCalculated = (v: string) => v.startsWith("Not calculated");
     write(
-      fit(right, valueWidth - 28, notCalculated(right) ? 13.5 : 16, notCalculated(right) ? 700 : 800),
-      M + labelWidth + 16,
-      y + 24,
-      notCalculated(right) ? 13.5 : 16,
-      notCalculated(right) ? 700 : 800,
-      notCalculated(right) ? C.faint : C.ink,
-    );
-    write(
       fit(left, valueWidth - 28, notCalculated(left) ? 13.5 : 16, notCalculated(left) ? 700 : 800),
-      M + labelWidth + valueWidth + 16,
+      M + labelWidth + 16,
       y + 24,
       notCalculated(left) ? 13.5 : 16,
       notCalculated(left) ? 700 : 800,
       notCalculated(left) ? C.faint : C.ink,
+    );
+    write(
+      fit(right, valueWidth - 28, notCalculated(right) ? 13.5 : 16, notCalculated(right) ? 700 : 800),
+      M + labelWidth + valueWidth + 16,
+      y + 24,
+      notCalculated(right) ? 13.5 : 16,
+      notCalculated(right) ? 700 : 800,
+      notCalculated(right) ? C.faint : C.ink,
     );
   });
 

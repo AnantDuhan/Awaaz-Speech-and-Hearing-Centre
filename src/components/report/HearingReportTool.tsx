@@ -358,7 +358,7 @@ export function HearingReportTool() {
                 {frequencies.map((hz) => (
                   <tr key={hz}>
                     <th scope="row">{hz}</th>
-                    {(["right", "left"] as Ear[]).flatMap((ear) =>
+                    {(["left", "right"] as Ear[]).flatMap((ear) =>
                       (["ac", "bc"] as Conduction[]).map((kind) => {
                         if (kind === "bc" && !BC_FREQUENCIES.includes(hz)) {
                           return (

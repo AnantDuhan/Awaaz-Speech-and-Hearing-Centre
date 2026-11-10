@@ -1,0 +1,220 @@
+
+.page {
+  padding-block: 48px 88px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  align-items: center;
+  padding: 40px;
+  border-radius: var(--radius-card);
+  background: var(--tint);
+}
+
+.portrait {
+  width: 250px;
+  height: 250px;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.identity h1 {
+  margin-block: 8px;
+  font-size: clamp(2.3rem, 5vw, 3.8rem);
+  font-weight: 950;
+  line-height: 1.05;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.role {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.registration {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block: 22px;
+  font-weight: 800;
+}
+
+.section {
+  padding-block: 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section h2,
+.contact h2 {
+  margin-bottom: 16px;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 900;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.infoCard,
+.documentList article,
+.certificate {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+.infoCard span,
+.infoCard strong {
+  display: block;
+}
+
+.infoCard span {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.tags li {
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--tint);
+  font-weight: 800;
+}
+
+.documentList,
+.certificateGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.documentList h3,
+.certificate h3 {
+  font-weight: 900;
+}
+
+.documentList span,
+.certificate span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.certificateHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.certificate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.documentIcon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: var(--tint);
+  color: var(--accent);
+}
+
+.certificate a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--accent);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.emptyCertificates {
+  padding: 40px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+
+.emptyCertificates h3 {
+  margin-block: 12px 6px;
+  font-weight: 900;
+}
+
+.emptyCertificates p {
+  color: var(--muted);
+}
+
+.contact {
+  margin-top: 48px;
+  padding: 36px;
+  border-radius: var(--radius-card);
+  background: var(--navy);
+  color: white;
+}
+
+.contact p {
+  margin-bottom: 22px;
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .portrait {
+    width: 180px;
+    height: 180px;
+  }
+
+  .infoGrid,
+  .documentList,
+  .certificateGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact {
+    padding: 24px;
+  }
+}

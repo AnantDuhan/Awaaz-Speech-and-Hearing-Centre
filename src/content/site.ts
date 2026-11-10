@@ -454,15 +454,47 @@ export function getService(slug: string) {
 /* Team                                                                */
 /* ------------------------------------------------------------------ */
 
-export const team = [
+export type SpecialistCertificate = {
+  title: string;
+  issuer: string;
+  year: string;
+  file: string;
+};
+
+export type Specialist = {
+  slug: string;
+  name: string;
+  role: string;
+  qualification: string;
+  registration: string;
+  photo: string;
+  bio: string;
+  experience: string;
+  specializations: string[];
+  education: {
+    degree: string;
+    institution: string;
+    year: string;
+  }[];
+  certificates: SpecialistCertificate[];
+};
+
+export const team: Specialist[] = [
   {
+    slug: "pushpak-kumar",
     name: "Pushpak Kumar",
-    role: "Audiologist",
-    qualification: "Speech and Hearing Professional (BASLP)",
-    // e.g. the RCI registration (CRR) number.
+    role: "Audiologist & Speech Therapist",
+    qualification: "Bachelor of Audiology and Speech-Language Pathology (BASLP)",
     registration: "A81403",
-  }
+    photo: "",
+    bio: "",
+    experience: "",
+    specializations: [],
+    education: [],
+    certificates: [],
+  },
 ];
+
 
 /* ------------------------------------------------------------------ */
 /* FAQ                                                                 */

@@ -8,7 +8,7 @@
 export type Tone = "yellow" | "coral" | "mint" | "sky";
 
 export const site = {
-  name: "Awaaz Speech & Hearing Centre",
+  name: "Aawaz Speech & Hearing Centre",
   tagline: "Speech, language & hearing",
   // The live domain, with https:// and no trailing slash. Used for SEO and the sitemap.
   url: "https://www.example.com",
@@ -190,9 +190,18 @@ export const sessionSteps: { title: string; text: string; tone: Tone }[] = [
 ];
 
 export const centrePhotos = [
-  "Play-based therapy room",
-  "Child-friendly test booth",
-  "Waiting area with toys",
+  {
+    src: "/play-based-therapy-room.jpg",
+    alt: "Play-based therapy room",
+  },
+  {
+    src: "/child-friendly-test-booth.jpg",
+    alt: "Child-friendly hearing test booth",
+  },
+  {
+    src: "/waiting-area-with-toys.jpg",
+    alt: "Waiting area with toys",
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -486,12 +495,19 @@ export const team: Specialist[] = [
     role: "Audiologist & Speech Therapist",
     qualification: "Bachelor of Audiology and Speech-Language Pathology (BASLP)",
     registration: "A81403",
-    photo: "",
+    photo: "/pushpak-kumar.jpg",
     bio: "",
     experience: "",
     specializations: [],
     education: [],
-    certificates: [],
+    certificates: [
+      {
+        title: "RCI Registration Certificate",
+        issuer: "Rehabilitation Council of India",
+        year: "Year shown on the certificate",
+        file: "/pushpak-rci-certificate.pdf",
+      },
+    ],
   },
 ];
 

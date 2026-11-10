@@ -15,7 +15,6 @@ import {
   formatDb,
   MAX_DB,
   MIN_DB,
-  OCTAVE_FREQUENCIES,
   pureToneAverage,
   readPoint,
   SCALES,
@@ -39,7 +38,15 @@ export type ReportData = {
   thresholds: Thresholds;
   audiologist: { name: string; qualification: string; registration: string };
 };
-export type ClinicInfo = { name: string; address: string; phone: string };
+export type ClinicInfo = {
+  name: string;
+  /** Shown above the audiologist's name, top right. */
+  role: string;
+  /** Up to four lines fit under the clinic name. */
+  branches: { label: string; address: string }[];
+  phone: string;
+  email: string;
+};
 const C = {
   navy: "#0B1B3A",
   ink: "#1F1D36",
@@ -53,11 +60,10 @@ const C = {
   white: "#FFFFFF",
 };
 const EAR_COLOR: Record<Ear, string> = { right: "#C81E1E", left: "#1D4ED8" };
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** dd/mm/yyyy, as on the clinic's printed form. */
 export function formatDate(iso: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!match) return iso;
-  return `${Number(match[3])} ${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : iso;
 }
 export function drawReport(
   canvas: HTMLCanvasElement,
@@ -69,7 +75,6 @@ export function drawReport(
   const W = PAGE.width;
   const H = PAGE.height;
   const M = 58;
-  const logoWidth = (68 * logoImage.naturalWidth) / logoImage.naturalHeight;
   canvas.width = W * options.scale;
   canvas.height = H * options.scale;
   const ctx = canvas.getContext("2d");
@@ -131,42 +136,71 @@ export function drawReport(
     ctx.closePath();
   };
   const orDash = (value: string) => (value.trim() ? value.trim() : "—");
-// ---------------- header ----------------
-  ctx.save();
-  ctx.drawImage(logoImage, M - 4, 40, logoWidth, 68);
-  ctx.restore();
-  const headerTextX = M + 82;
-  write(fit(clinic.name, 720, 30, 900), headerTextX, 84, 30, 900, C.navy);
-  write(fit(`${clinic.address}  ·  ${clinic.phone}`, 1080, 15, 600), headerTextX, 112, 15, 600, C.muted);
-  write("REPORT NO.", W - M, 74, 12, 800, C.faint, "right", 1.2);
-  write(fit(orDash(data.reportNo), 220, 18, 800), W - M, 100, 18, 800, C.ink, "right");
+// ---------------- letterhead (laid out like the clinic's printed form) ----------------
+  const logoSize = 124;
+  const logoWidth = (logoSize * logoImage.naturalWidth) / logoImage.naturalHeight;
+  ctx.drawImage(logoImage, M, 36, logoWidth, logoSize);
+  const headerTextX = M + logoWidth + 24;
+  const rightBlockWidth = 340;
+  const headerTextWidth = W - M - rightBlockWidth - 40 - headerTextX;
+  write(fit(clinic.name, headerTextWidth, 40, 900), headerTextX, 78, 40, 900, C.navy);
+  // Branches: labels in one column, a colon, then the address.
+  setFont(14.5, 800);
+  const branchLabelWidth = Math.max(0, ...clinic.branches.map((b) => ctx.measureText(b.label).width)) + 12;
+  clinic.branches.slice(0, 4).forEach((branch, i) => {
+    const y = 108 + i * 20;
+    write(branch.label, headerTextX, y, 14.5, 800, C.ink);
+    write(":", headerTextX + branchLabelWidth, y, 14.5, 800, C.ink);
+    const addressX = headerTextX + branchLabelWidth + 14;
+    write(fit(branch.address, headerTextX + headerTextWidth - addressX, 14.5, 600), addressX, y, 14.5, 600, C.muted);
+  });
+  // Audiologist and contact details, right-aligned; the CRR no. lines up with the last branch.
+  const R = W - M;
+  write(clinic.role.toUpperCase(), R, 58, 12, 800, C.faint, "right", 1.2);
+  write(fit(orDash(data.audiologist.name), rightBlockWidth, 24, 900), R, 88, 24, 900, C.navy, "right");
+  write(fit(`Mob. ${clinic.phone}`, rightBlockWidth, 15.5, 700), R, 114, 15.5, 700, C.ink, "right");
+  write(fit(`Email: ${clinic.email}`, rightBlockWidth, 15, 600), R, 136, 15, 600, C.muted, "right");
+  write(fit(`CRR No. ${orDash(data.audiologist.registration)}`, rightBlockWidth, 15.5, 800), R, 168, 15.5, 800, C.ink, "right");
   ctx.fillStyle = C.yellow;
-  ctx.fillRect(M, 134, W - 2 * M, 6);
-  write("AUDIOLOGICAL EVALUATION REPORT", M, 186, 24, 900, C.navy, "left", 1.5);
-// ---------------- patient details ----------------
-  const boxTop = 190;
-  const boxHeight = 104;
-  roundRect(M, boxTop, W - 2 * M, boxHeight, 16);
-  ctx.fillStyle = C.tint;
-  ctx.fill();
+  ctx.fillRect(M, 182, W - 2 * M, 5);
+  // Title: centred and underlined, report number on the right of the same line.
+  const titleY = 228;
+  write("AUDIOGRAM", W / 2, titleY, 28, 900, C.navy, "center", 2);
+  setFont(28, 900);
+  const titleWidth = ctx.measureText("AUDIOGRAM").width + 2 * 8; // 9 letters × 2px spacing, minus the trailing gap
+  ctx.fillStyle = C.navy;
+  ctx.fillRect(W / 2 - titleWidth / 2, titleY + 7, titleWidth, 2.5);
+  write(fit(`Report No. ${orDash(data.reportNo)}`, 320, 14, 700), R, titleY, 14, 700, C.muted, "right");
+// ---------------- patient details: one bordered row, as on the printed form ----------------
+  const boxTop = 246;
+  const boxHeight = 64;
+  ctx.strokeStyle = C.ink;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(M, boxTop, W - 2 * M, boxHeight);
   const age = data.patient.age.trim();
-  const ageText = age ? (/^\d+$/.test(age) ? `${age} yrs` : age) : "—";
-// Four columns across two compact rows.
-  const cells: { label: string; value: string; column: number; row: number; span: number }[] = [
-    { label: "Patient name", value: orDash(data.patient.name), column: 0, row: 0, span: 1 },
-    { label: "Age / Sex", value: `${ageText} / ${orDash(data.patient.sex)}`, column: 1, row: 0, span: 1 },
-    { label: "Patient ID", value: orDash(data.patient.id), column: 2, row: 0, span: 1 },
-    { label: "Date of test", value: data.testDate ? formatDate(data.testDate) : "—", column: 3, row: 0, span: 1 },
-    { label: "Referred by", value: orDash(data.patient.referredBy), column: 0, row: 1, span: 1 },
-    { label: "Mobile", value: orDash(data.patient.mobile), column: 1, row: 1, span: 1 },
-    { label: "Address", value: orDash(data.patient.address), column: 2, row: 1, span: 2 },
+  const sex = data.patient.sex.trim();
+  const gender = sex === "Male" ? "M" : sex === "Female" ? "F" : sex;
+  const ageGender = [age && /^\d+$/.test(age) ? `${age} Yrs.` : age, gender].filter(Boolean).join("/") || "—";
+  const referredBy = data.patient.referredBy.trim();
+  const fields: { label: string; value: string; weight: number }[] = [
+    { label: "C. R. No.", value: orDash(data.patient.id), weight: 1 },
+    { label: "Patient's Name", value: orDash(data.patient.name), weight: 1.7 },
+    { label: "Age/G", value: ageGender, weight: 1 },
+    { label: "Address", value: orDash(data.patient.address), weight: 1.7 },
+    { label: "Mobile No.", value: orDash(data.patient.mobile), weight: 1.1 },
+    { label: "Date", value: data.testDate ? formatDate(data.testDate) : "—", weight: 0.9 },
+    // Not on the printed form, so it only appears when staff fill it in.
+    ...(referredBy ? [{ label: "Referred By", value: referredBy, weight: 1.3 }] : []),
+    { label: "Doctor Name", value: orDash(data.audiologist.name), weight: 1.2 },
   ];
-  const cellWidth = (W - 2 * M - 48) / 4;
-  for (const cell of cells) {
-    const x = M + 24 + cell.column * cellWidth;
-    const y = boxTop + 24 + cell.row * 42;
-    write(cell.label.toUpperCase(), x, y, 11.5, 800, C.faint, "left", 1);
-    write(fit(cell.value, cellWidth * cell.span - 20, 16, 800), x, y + 20, 16, 800, C.ink);
+  const fieldsWidth = W - 2 * M - 48;
+  const totalWeight = fields.reduce((sum, field) => sum + field.weight, 0);
+  let fieldX = M + 24;
+  for (const field of fields) {
+    const fieldWidth = (fieldsWidth * field.weight) / totalWeight;
+    write(field.label, fieldX, boxTop + 26, 15, 800, C.navy);
+    write(fit(field.value, fieldWidth - 16, 16, 600), fieldX, boxTop + 50, 16, 600, C.ink);
+    fieldX += fieldWidth;
   }
 // ---------------- audiograms ----------------
   const symbol = (ear: Ear, kind: "ac" | "bc", masked: boolean, x: number, y: number, r: number) => {
@@ -236,20 +270,32 @@ export function drawReport(
     ctx.stroke();
     ctx.restore();
   };
-  const panelTop = 312;
+  // The bottom strip holds the results table (left) and the signature (right),
+  // so the audiograms get all the height between the patient box and that strip.
+  const signatureTop = H - 168;
+  const panelTop = 322;
   const panelGap = 54;
   const panelWidth = (W - 2 * M - panelGap) / 2;
-  let panelBottom = 0;
+  const chartTop = panelTop + 34;
+  const belowChart = 86; // frequency labels, axis title and symbol legend
+  const chartBottomLimit = signatureTop - 22 - belowChart;
+  // Chart height in octaves (ASHA: 20 dB on the y-axis = one octave on the x-axis).
+  const dbOctaves = (MAX_DB - MIN_DB) / 20;
+  // The grid is 14 equal columns, each half an octave wide (half an octave of
+  // margin either side of 125 Hz and 8000 Hz). 750, 1500, 3000 and 6000 Hz sit
+  // midway between their octaves, as on printed audiogram forms. A column is as
+  // wide as a 10 dB row is tall, so every grid box is the same square.
+  const COLUMNS = 14;
+  const unit = Math.min((panelWidth - 66) / 7, (chartBottomLimit - chartTop) / dbOctaves);
+  const cell = unit / 2;
+  const column = (hz: number) => Math.round(2 * Math.log2(hz / 125)) + 1;
   const drawAudiogram = (ear: Ear, px: number) => {
     const color = EAR_COLOR[ear];
-    const availableWidth = panelWidth - 58 - 8;
-    const unit = Math.min(availableWidth / 7, 70); // preserve 20 dB per octave on landscape paper
-    const width = unit * 7;
+    const width = cell * COLUMNS;
     const left = px + (panelWidth - width) / 2;
-    const top = panelTop + 34;
-    const height = unit * ((MAX_DB - MIN_DB) / 20);
-    const lowest = Math.log2(125) - 0.5;
-    const xFor = (hz: number) => left + (Math.log2(hz) - lowest) * unit;
+    const top = chartTop;
+    const height = unit * dbOctaves;
+    const xFor = (hz: number) => left + column(hz) * cell;
     const yFor = (db: number) => top + ((db - MIN_DB) / 20) * unit;
     write(ear === "right" ? "RIGHT EAR" : "LEFT EAR", left, panelTop + 18, 17, 900, color, "left", 1.2);
     const result = pta[ear];
@@ -267,20 +313,20 @@ export function drawReport(
       line(left, yFor(db), left + width, yFor(db));
       write(String(db), left - 10, yFor(db) + 4.5, 12.5, 700, C.muted, "right");
     }
+    // Every column line is drawn the same, including the two unlabelled ones
+    // between 125–250 Hz and 250–500 Hz, so all boxes look identical.
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 1;
+    for (let i = 1; i < COLUMNS; i++) {
+      line(left + i * cell, top, left + i * cell, top + height);
+    }
     for (const hz of ALL_FREQUENCIES) {
-      const octave = OCTAVE_FREQUENCIES.includes(hz);
-      const emphasized = hz === 750 || hz === 1500 || hz === 3000 || hz === 6000;
-      ctx.strokeStyle = octave || emphasized ? C.gridStrong : C.grid;
-      ctx.lineWidth = emphasized ? 1.5 : 1;
-      ctx.setLineDash([]);
-      line(xFor(hz), top, xFor(hz), top + height);
-      const labelY = top + height + (ALL_FREQUENCIES.indexOf(hz) % 2 === 0 ? 20 : 36);
-      write(String(hz), xFor(hz), labelY, 12, 700, C.muted, "center");
+      write(String(hz), xFor(hz), top + height + 22, 13, 700, C.muted, "center");
     }
     ctx.strokeStyle = C.gridStrong;
     ctx.lineWidth = 1.5;
     ctx.strokeRect(left, top, width, height);
-    write("Frequency (Hz)", left + width / 2, top + height + 59, 14, 800, C.ink, "center");
+    write("Frequency (Hz)", left + width / 2, top + height + 50, 14, 800, C.ink, "center");
     ctx.save();
     ctx.translate(px + 12, top + height / 2);
     ctx.rotate(-Math.PI / 2);
@@ -305,14 +351,14 @@ export function drawReport(
       previous = current;
     }
     ctx.restore();
-    const r = 10.5;
+    const r = cell * 0.24;
     for (const hz of ALL_FREQUENCIES) {
       const point = readPoint(side.ac[hz]);
       if (!point) continue;
       symbol(ear, "ac", point.masked, xFor(hz), yFor(point.db), r);
       if (point.noResponse) noResponseArrow(ear, xFor(hz), yFor(point.db), r);
     }
-    const offset = ear === "right" ? -15 : 15;
+    const offset = (ear === "right" ? -1 : 1) * cell * 0.36;
     for (const hz of BC_FREQUENCIES) {
       const point = readPoint(side.bc[hz]);
       if (!point) continue;
@@ -320,7 +366,7 @@ export function drawReport(
       if (point.noResponse) noResponseArrow(ear, xFor(hz) + offset, yFor(point.db), r);
     }
   // Clinical symbol legend for this ear.
-  const legendY = top + height + 96;
+  const legendY = top + height + belowChart;
   const items: { kind: "ac" | "bc" | "nr"; masked: boolean; label: string }[] = [
     { kind: "ac", masked: false, label: ear === "right" ? "ACR" : "ACL" },
     { kind: "bc", masked: false, label: ear === "right" ? "BCR" : "BCL" },
@@ -355,8 +401,6 @@ export function drawReport(
     write(item.label, legendX + labelOffset, legendY, 12, 700, C.muted);
     legendX += itemWidths[index] + itemGap;
   }
-
-  panelBottom = Math.max(panelBottom, legendY);
   };
   drawAudiogram("left", M);
   drawAudiogram("right", M + panelWidth + panelGap);
@@ -374,26 +418,32 @@ export function drawReport(
     ["Pure-tone average (PTA)", ptaText("left"), ptaText("right")],
     ["Degree of hearing loss", degreeText("left"), degreeText("right")],
   ];
-  const tableTop = panelBottom + 12;
+  // Sits in the bottom strip, left of the signature, with its last row level
+  // with the registration number.
+  const sigWidth = 420;
+  const sigLeft = W - M - sigWidth;
+  const tableLeft = M;
+  const tableWidth = sigLeft - 48 - M;
+  const tableTop = signatureTop + 38;
   const rowHeight = 30;
-  const labelWidth = 400;
-  const valueWidth = (W - 2 * M - labelWidth) / 2;
-  roundRect(M, tableTop, W - 2 * M, rowHeight, 10);
+  const labelWidth = 340;
+  const valueWidth = (tableWidth - labelWidth) / 2;
+  roundRect(tableLeft, tableTop, tableWidth, rowHeight, 10);
   ctx.fillStyle = C.tint;
   ctx.fill();
-  write("RESULT", M + 16, tableTop + 20, 12, 800, C.faint, "left", 1);
-  write("LEFT EAR", M + labelWidth + 16, tableTop + 20, 12.5, 900, EAR_COLOR.left, "left", 1);
-  write("RIGHT EAR", M + labelWidth + valueWidth + 16, tableTop + 20, 12.5, 900, EAR_COLOR.right, "left", 1);
+  write("RESULT", tableLeft + 16, tableTop + 20, 12, 800, C.faint, "left", 1);
+  write("LEFT EAR", tableLeft + labelWidth + 16, tableTop + 20, 12.5, 900, EAR_COLOR.left, "left", 1);
+  write("RIGHT EAR", tableLeft + labelWidth + valueWidth + 16, tableTop + 20, 12.5, 900, EAR_COLOR.right, "left", 1);
   rows.forEach(([label, left, right], i) => {
     const y = tableTop + rowHeight * (i + 1);
     ctx.strokeStyle = C.grid;
     ctx.lineWidth = 2.8;
-    line(M, y + rowHeight, W - M, y + rowHeight);
-    write(fit(label, labelWidth - 28, 15, 700), M + 16, y + 21, 15, 700, C.muted);
+    line(tableLeft, y + rowHeight, tableLeft + tableWidth, y + rowHeight);
+    write(fit(label, labelWidth - 28, 15, 700), tableLeft + 16, y + 21, 15, 700, C.muted);
     const notCalculated = (v: string) => v.startsWith("Not calculated");
     write(
       fit(left, valueWidth - 28, notCalculated(left) ? 13.5 : 16, notCalculated(left) ? 700 : 800),
-      M + labelWidth + 16,
+      tableLeft + labelWidth + 16,
       y + 21,
       notCalculated(left) ? 13.5 : 16,
       notCalculated(left) ? 700 : 800,
@@ -401,7 +451,7 @@ export function drawReport(
     );
     write(
       fit(right, valueWidth - 28, notCalculated(right) ? 13.5 : 16, notCalculated(right) ? 700 : 800),
-      M + labelWidth + valueWidth + 16,
+      tableLeft + labelWidth + valueWidth + 16,
       y + 21,
       notCalculated(right) ? 13.5 : 16,
       notCalculated(right) ? 700 : 800,
@@ -409,16 +459,14 @@ export function drawReport(
     );
   });
 // ---------------- signature & footer ----------------
-  const signatureTop = H - 168;
-  const sigLeft = W - M - 330;
   ctx.strokeStyle = C.ink;
   ctx.lineWidth = 1.2;
   line(sigLeft, signatureTop + 48, W - M, signatureTop + 48);
   write("Signature & Stamp", W - M, signatureTop + 65, 11.5, 700, C.faint, "right");
-  write(fit(orDash(data.audiologist.name), 330, 17, 800), W - M, signatureTop + 88, 17, 800, C.ink, "right");
-  write(fit(orDash(data.audiologist.qualification), 330, 14, 600), W - M, signatureTop + 108, 14, 600, C.muted, "right");
+  write(fit(orDash(data.audiologist.name), sigWidth, 17, 800), W - M, signatureTop + 88, 17, 800, C.ink, "right");
+  write(fit(orDash(data.audiologist.qualification), sigWidth, 14, 600), W - M, signatureTop + 108, 14, 600, C.muted, "right");
   write(
-    fit(`Reg. no. ${orDash(data.audiologist.registration)}`, 330, 14, 600),
+    fit(`CRR No. ${orDash(data.audiologist.registration)}`, sigWidth, 14, 600),
     W - M,
     signatureTop + 128,
     14,

@@ -1,6 +1,6 @@
+import Image from "next/image";
 import { centrePhotos } from "@/content/site";
 import ui from "@/styles/ui.module.css";
-import { PhotoPlaceholder } from "./PhotoPlaceholder";
 import styles from "./InsideCentre.module.css";
 
 export function InsideCentre() {
@@ -20,9 +20,18 @@ export function InsideCentre() {
         </div>
 
         <div className={styles.grid}>
-          <PhotoPlaceholder label={main} className={styles.main} />
-          {side.map((label) => (
-            <PhotoPlaceholder key={label} label={label} className={styles.side} />
+          {[main, ...side].map((photo, index) => (
+            <div
+              key={photo.src}
+              className={`${styles.photo} ${index === 0 ? styles.main : styles.side}`}
+            >
+              <Image
+                src={photo.src}
+                alt={photo.alt}
+                fill
+                sizes="(max-width: 760px) 100vw, (max-width: 1200px) 60vw, 700px"
+              />
+            </div>
           ))}
         </div>
       </div>

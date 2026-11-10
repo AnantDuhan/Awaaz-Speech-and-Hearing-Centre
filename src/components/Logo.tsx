@@ -6,7 +6,7 @@ export const SPEECH_BUBBLE_PATH =
 
 // The words in the header lockup, matching the logo files. site.name stays the
 // full name for page titles, the footer and Google.
-export const LOGO_NAME = "Awaaz";
+export const LOGO_NAME = "Aawaz";
 export const LOGO_TAGLINE = "Speech & Hearing Centre";
 export const LOGO_IMAGE = logoImage;
 

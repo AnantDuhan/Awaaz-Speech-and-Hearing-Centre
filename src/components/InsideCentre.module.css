@@ -13,6 +13,16 @@
   gap: 20px;
 }
 
+.photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+}
+
+.photo img {
+  object-fit: cover;
+}
+
 .main {
   grid-row: 1 / span 2;
 }

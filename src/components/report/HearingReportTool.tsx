@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { fullAddress, site, team } from "@/content/site";
+import { site, team } from "@/content/site";
 import {
   ALL_FREQUENCIES,
   BC_FREQUENCIES,
@@ -25,7 +25,19 @@ import { LOGO_IMAGE } from "@/components/Logo";
 import ui from "@/styles/ui.module.css";
 import styles from "./HearingReportTool.module.css";
 
-const CLINIC: ClinicInfo = { name: site.name, address: fullAddress, phone: site.phone.display };
+// Letterhead for the printed report, copied from the clinic's own audiogram form.
+const CLINIC: ClinicInfo = {
+  name: "Aawaz Speech & Hearing Centre",
+  role: "Audiologist & Speech Therapist",
+  branches: [
+    { label: "Main Branch", address: "Old Awas Vikas, Kashipur (U.S. Nagar), Uttarakhand" },
+    { label: "Jaspur Branch", address: "Jaspur (U.S. Nagar), Uttarakhand" },
+    { label: "Bazpur Branch", address: "Bazpur (U.S. Nagar), Uttarakhand" },
+    { label: "Ramnagar Branch", address: "Ramnagar (Nainital), Uttarakhand" },
+  ],
+  phone: site.phone.display,
+  email: "aawazksp@yahoo.com",
+};
 const REPORT_PREFIX = "AWZ";
 const EARS: Ear[] = ["left", "right"];
 const EAR_LABEL: Record<Ear, string> = { right: "Right ear", left: "Left ear" };
@@ -217,8 +229,8 @@ export function HearingReportTool() {
     if (format === "jpg") return new File([image.blob], fileName("jpg"), { type: "image/jpeg" });
     const bytes = new Uint8Array(await image.blob.arrayBuffer());
     const pdf = jpegToPdf(bytes, image.width, image.height, {
-      title: `Hearing test report${data.patient.name.trim() ? ` — ${data.patient.name.trim()}` : ""}`,
-      author: site.name,
+      title: `Audiogram${data.patient.name.trim() ? ` — ${data.patient.name.trim()}` : ""}`,
+      author: CLINIC.name,
     });
     return new File([pdf], fileName("pdf"), { type: "application/pdf" });
   };

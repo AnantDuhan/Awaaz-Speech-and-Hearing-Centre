@@ -1,6 +1,6 @@
+import Image from "next/image";
 import { heroTags } from "@/content/site";
 import ui from "@/styles/ui.module.css";
-import { PhotoPlaceholder } from "./PhotoPlaceholder";
 import { SoundWave } from "./SoundWave";
 import styles from "./Hero.module.css";
 
@@ -38,11 +38,15 @@ export function Hero() {
           <div className={styles.blob} aria-hidden="true" />
           <div className={`${styles.dot} ${styles.dotMint}`} aria-hidden="true" />
           <div className={`${styles.dot} ${styles.dotCoral}`} aria-hidden="true" />
-          <PhotoPlaceholder
-            label="Your therapist playing with a child"
-            shape="circle"
-            className={styles.photo}
-          />
+          <div className={styles.photo}>
+            <Image
+              src="/therapist-playing-with-child.jpg"
+              alt="A therapist playing with a child"
+              fill
+              sizes="(max-width: 700px) 70vw, 290px"
+              className={styles.photoImage}
+            />
+          </div>
           <span className={`${styles.bubble} ${styles.bubbleOne}`} aria-hidden="true">
             ba-ba!
           </span>

@@ -70,7 +70,7 @@ export function jpegToPdf(
   startObject(6);
   add(
     `<< /Title ${pdfText(info.title)} /Author ${pdfText(info.author)} ` +
-      `/Creator (Awaaz hearing report tool) /CreationDate (${pdfDate(new Date())}) >>\nendobj\n`,
+      `/Creator (Aawaz hearing report tool) /CreationDate (${pdfDate(new Date())}) >>\nendobj\n`,
   );
 
   const xrefOffset = length;

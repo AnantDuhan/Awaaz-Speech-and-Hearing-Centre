@@ -35,6 +35,8 @@ Open `/tools` (or `/tools/hearing-report` directly). Neither is linked anywhere 
 
 - **Private:** everything runs in the browser. Nothing is saved or sent, and closing the page clears it.
 - **Output:** a one-page A4 landscape PDF, drawn at 300 dpi, with left and right audiograms in standard ASHA symbols, PTA, mobile number and address. On phones, "Share PDF" sends it straight to WhatsApp. A JPEG download is also offered. The PDF holds the page as one image (`src/lib/pdf.ts`, no library), so its text isn't selectable.
+- **Audiogram grid:** 14 equal half-octave columns with 750, 1500, 3000 and 6000 Hz midway between octaves, as on printed audiogram forms. Each column is as wide as a 10 dB row is tall (ASHA's 20 dB = 1 octave), so every box is the same square. The chart size is worked out from the space left above the results table and signature (`src/lib/renderReport.ts`).
+- **Letterhead:** copied from the clinic's printed audiogram form: "Aawaz Speech & Hearing Centre", the four branch addresses, the audiologist's phone, email and CRR no., an "AUDIOGRAM" title, and the patient details in one bordered row (C. R. No., Patient's Name, Age/G, Address, Mobile No., Date, Doctor Name). "Referred By" is added to that row only when it's filled in. The letterhead text lives in `CLINIC` in `src/components/report/HearingReportTool.tsx`.
 - **Grading:** WHO (2021), using PTA of 0.5/1/2/4 kHz.
 - **Not a secure system:** anyone with the address can open the tool and make a report-looking image. The report number and "call to verify" line are the safeguard. For real access control, move it behind a login.
 - **Logic** is in `src/lib/audiometry.ts`, and the drawing is in `src/lib/renderReport.ts`.

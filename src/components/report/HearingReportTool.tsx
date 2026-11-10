@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { fullAddress, site, team } from "@/content/site";
 import {
   ALL_FREQUENCIES,
@@ -8,10 +8,8 @@ import {
   type Conduction,
   type Ear,
   emptyThresholds,
-  EXTRA_FREQUENCIES,
   formatDb,
   isInvalid,
-  MAIN_FREQUENCIES,
   MAX_DB,
   MIN_DB,
   type PointStatus,
@@ -53,10 +51,6 @@ function blankReport(): ReportData {
     patient: { name: "", age: "", sex: "", id: "", referredBy: "", mobile: "", address: "" },
     scaleId: "who",
     thresholds: emptyThresholds(),
-    speech: { srt: { right: "", left: "" }, sds: { right: "", left: "" } },
-    tympanometry: { type: { right: "", left: "" }, reflexes: { right: "", left: "" } },
-    impression: "",
-    recommendations: "",
     audiologist: {
       name: "Pushpak Kumar",
       qualification: real(member?.qualification),
@@ -176,15 +170,6 @@ export function HearingReportTool() {
     left: pureToneAverage(data.thresholds, "left", scale),
   };
 
-  const hasExtraValues = useMemo(
-    () =>
-      EXTRA_FREQUENCIES.some((hz) =>
-        EARS.some(
-          (ear) => data.thresholds[ear].ac[hz]?.value || data.thresholds[ear].bc[hz]?.value,
-        ),
-      ),
-    [data.thresholds],
-  );
   const frequencies = ALL_FREQUENCIES;
 
   const invalidCount = EARS.reduce(
@@ -195,7 +180,7 @@ export function HearingReportTool() {
     0,
   );
 
-  /** Draws the report at 300 dpi (2480 × 3508) and returns it as a JPEG. */
+  /** Draws the A4 landscape report at 300 dpi and returns it as a JPEG. */
   const renderJpeg = () =>
     new Promise<{ blob: Blob; width: number; height: number } | null>((resolve) => {
       const canvas = document.createElement("canvas");
@@ -471,9 +456,9 @@ export function HearingReportTool() {
             <Field label="Name">
               <input
                 className={styles.input}
-                value={data.audiologist.name}
+                value="Pushpak Kumar"
+                readOnly
                 maxLength={50}
-                onChange={(e) => update((d) => void (d.audiologist.name = e.target.value))}
               />
             </Field>
             <Field label="Qualification">
@@ -487,9 +472,9 @@ export function HearingReportTool() {
             <Field label="Registration no.">
               <input
                 className={styles.input}
-                value={data.audiologist.registration}
+                value="A81403"
+                readOnly
                 maxLength={30}
-                onChange={(e) => update((d) => void (d.audiologist.registration = e.target.value))}
               />
             </Field>
             <Field label="Report no.">

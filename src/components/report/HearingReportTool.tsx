@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { type MouseEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { site, team } from "@/content/site";
 import {
   ALL_FREQUENCIES,
@@ -21,6 +21,7 @@ import {
 } from "@/lib/audiometry";
 import { jpegToPdf } from "@/lib/pdf";
 import { type ClinicInfo, drawReport, type ReportData } from "@/lib/renderReport";
+import { buildReportEmail, isEmailAddress, mailtoLink } from "@/lib/reportEmail";
 import { LOGO_IMAGE } from "@/components/Logo";
 import ui from "@/styles/ui.module.css";
 import styles from "./HearingReportTool.module.css";
@@ -144,9 +145,17 @@ export function HearingReportTool() {
       return false;
     }
   });
+  // On phones the share sheet can send the PDF already attached; on computers we
+  // open the email app with the message filled in and download the PDF to attach.
+  const [shareEmail] = useState(() => canShare && window.matchMedia("(pointer: coarse)").matches);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailNote, setEmailNote] = useState("");
+  const [emailHindi, setEmailHindi] = useState(false);
+  const [emailStatus, setEmailStatus] = useState("");
   const previewRef = useRef<HTMLCanvasElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
-  const update = (change: (draft: ReportData) => void) =>
+  const update =(change: (draft: ReportData) => void) =>
     setData((previous) => {
       const next = structuredClone(previous);
       change(next);
@@ -263,9 +272,70 @@ export function HearingReportTool() {
     }
   };
 
+  const recipient = emailTo.trim();
+  const recipientInvalid = recipient !== "" && !isEmailAddress(recipient);
+  const email = buildReportEmail(data, CLINIC, { note: emailNote, hindi: emailHindi });
+  const mailto = mailtoLink(recipientInvalid ? "" : recipient, email);
+
+  const emailReport = async (event: MouseEvent<HTMLAnchorElement>) => {
+    if (recipientInvalid) {
+      event.preventDefault();
+      setEmailStatus("That email address doesn't look right. Check it and try again.");
+      emailInputRef.current?.focus();
+      return;
+    }
+    if (!shareEmail) {
+      // Computer: the link itself opens the email app; download the PDF to attach.
+      const file = await makeFile("pdf");
+      if (!file) {
+        setEmailStatus("Sorry, the report couldn't be created in this browser.");
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      setEmailStatus(`Saved ${file.name}. Attach it to the email that opened, check the address, then send.`);
+      return;
+    }
+    // Phone: share sheet with the PDF attached. It can't fill in the address, so copy it.
+    event.preventDefault();
+    if (recipient) navigator.clipboard?.writeText(recipient).catch(() => undefined);
+    const file = await makeFile("pdf");
+    if (!file) {
+      setEmailStatus("Sorry, the report couldn't be created in this browser.");
+      return;
+    }
+    try {
+      await navigator.share({ files: [file], title: email.subject, text: email.body });
+      setEmailStatus("Shared. Check the email in your mail app before sending.");
+    } catch (error) {
+      if ((error as DOMException)?.name !== "AbortError") {
+        setEmailStatus("Sharing didn't work. Download the PDF and attach it to an email instead.");
+      }
+    }
+  };
+
+  const copyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(`Subject: ${email.subject}\n\n${email.body}`);
+      setEmailStatus("Message copied. Paste it into your email and attach the PDF.");
+    } catch {
+      setEmailStatus("Couldn't copy. Select the message below and copy it instead.");
+    }
+  };
+
   const startNew = () => {
     if (window.confirm("Clear this report and start a new one?")) {
       setData(blankReport());
+      setEmailTo("");
+      setEmailNote("");
+      setEmailHindi(false);
+      setEmailStatus("");
       setStatus("Started a new report.");
     }
   };
@@ -515,6 +585,106 @@ export function HearingReportTool() {
             </Field>
           </div>
         </fieldset>
+
+        <fieldset className={styles.section} id="email-report">
+          <legend className={styles.legend}>Email the report</legend>
+          <div className={styles.grid}>
+            <Field label="Patient's email" hint="Only used to address the email. It isn't printed on the report.">
+              <input
+                ref={emailInputRef}
+                className={styles.input}
+                type="email"
+                inputMode="email"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="name@example.com"
+                value={emailTo}
+                maxLength={120}
+                aria-invalid={recipientInvalid || undefined}
+                onChange={(e) => setEmailTo(e.target.value)}
+              />
+            </Field>
+          </div>
+          {recipientInvalid ? (
+            <p className={styles.fieldError}>That doesn&apos;t look like an email address yet.</p>
+          ) : null}
+          <Field label="Personal note (optional)" hint="Added after the first paragraph.">
+            <textarea
+              className={styles.textarea}
+              rows={2}
+              maxLength={400}
+              value={emailNote}
+              onChange={(e) => setEmailNote(e.target.value)}
+            />
+          </Field>
+          <label className={styles.checkboxRow}>
+            <input type="checkbox" checked={emailHindi} onChange={(e) => setEmailHindi(e.target.checked)} />
+            Add a short note in Hindi
+          </label>
+
+          <div className={styles.mail} aria-label="Email preview">
+            <dl className={styles.mailHead}>
+              <div>
+                <dt>To</dt>
+                <dd className={recipient && !recipientInvalid ? undefined : styles.mailEmpty}>
+                  {recipient && !recipientInvalid ? recipient : "Add the patient's email above"}
+                </dd>
+              </div>
+              <div>
+                <dt>Subject</dt>
+                <dd className={styles.mailSubject}>{email.subject}</dd>
+              </div>
+              <div>
+                <dt>Attached</dt>
+                <dd>
+                  <span className={styles.mailFile}>
+                    <span className={styles.mailFileBadge} aria-hidden="true">
+                      PDF
+                    </span>
+                    {fileName("pdf")}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+            <p className={styles.mailBody}>{email.body}</p>
+          </div>
+
+          <div className={styles.actions}>
+            <a
+              href={mailto}
+              className={`${ui.btn} ${ui.btnSmall} ${ui.btnAccent} ${styles.action}`}
+              aria-disabled={!fontsReady || !logoImage || undefined}
+              onClick={(event) => {
+                if (!fontsReady || !logoImage) {
+                  event.preventDefault();
+                  return;
+                }
+                void emailReport(event);
+              }}
+            >
+              Email report
+            </a>
+            <button
+              type="button"
+              className={`${ui.btn} ${ui.btnSmall} ${styles.action} ${styles.actionOutline}`}
+              onClick={copyMessage}
+            >
+              Copy message
+            </button>
+          </div>
+          <p className={styles.help}>
+            {shareEmail
+              ? "Opens your phone's share menu with the PDF attached. Pick Gmail or Mail. The patient's email address is copied, so paste it into the To field."
+              : "Opens your email app with the message filled in and downloads the PDF. Attach the PDF before you send: email links can't attach files on their own."}{" "}
+            {!shareEmail && mailto.length > 2000
+              ? "This message is long, and some email apps cut it short. If it opens incomplete, use Copy message instead. "
+              : null}
+            Double-check the address. A report sent to the wrong person can&apos;t be taken back.
+          </p>
+          <p className={styles.statusMessage} aria-live="polite">
+            {emailStatus}
+          </p>
+        </fieldset>
       </div>
 
       <aside className={styles.previewColumn} aria-labelledby="preview-title">
@@ -539,6 +709,9 @@ export function HearingReportTool() {
                 Share PDF
               </button>
             ) : null}
+            <a href="#email-report" className={`${ui.btn} ${ui.btnSmall} ${styles.action} ${styles.actionOutline}`}>
+              Email
+            </a>
           </div>
           <p className={styles.altDownload}>
             Need a picture instead?{" "}

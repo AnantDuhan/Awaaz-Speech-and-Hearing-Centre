@@ -299,118 +299,9 @@
   font-family: inherit;
 }
 
-.action:disabled,
-.action[aria-disabled="true"] {
+.action:disabled {
   opacity: 0.55;
   cursor: wait;
-}
-
-/* Email the report */
-.fieldError {
-  margin-top: -6px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #b42318;
-}
-
-.checkboxRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.checkboxRow input {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--accent);
-}
-
-.mail {
-  border: 2px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.mailHead {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 6px 18px;
-  background: var(--tint);
-  border-bottom: 2px solid var(--border);
-}
-
-.mailHead > div {
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: 12px;
-  align-items: baseline;
-  padding: 8px 0;
-}
-
-.mailHead > div + div {
-  border-top: 1px solid var(--border);
-}
-
-.mailHead dt {
-  font-size: 0.8125rem;
-  font-weight: 800;
-  color: var(--muted);
-}
-
-.mailHead dd {
-  margin: 0;
-  min-width: 0;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.mailEmpty {
-  color: var(--muted);
-  font-style: italic;
-  font-weight: 600 !important;
-}
-
-.mailSubject {
-  font-weight: 900 !important;
-}
-
-.mailFile {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 100%;
-  padding: 4px 10px 4px 4px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  font-size: 0.875rem;
-  overflow-wrap: anywhere;
-}
-
-.mailFileBadge {
-  flex: none;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: #d92d20;
-  color: #ffffff;
-  font-size: 0.6875rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-}
-
-.mailBody {
-  max-height: 380px;
-  margin: 0;
-  padding: 16px 18px;
-  overflow-y: auto;
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 .altDownload {
@@ -478,18 +369,5 @@
 
   .actions > * {
     flex: 1 1 100%;
-  }
-
-  .mailHead {
-    padding: 4px 14px;
-  }
-
-  .mailHead > div {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
-  }
-
-  .mailBody {
-    padding: 14px;
   }
 }

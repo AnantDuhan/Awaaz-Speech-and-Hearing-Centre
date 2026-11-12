@@ -26,7 +26,7 @@ const tools: Tool[] = [
     href: "/tools/hearing-report",
     title: "Hearing test report",
     text: "Turn the audiometer's results into a one-page report with right and left audiograms, pure-tone averages, speech and tympanometry results, and findings.",
-    output: "A4 PDF · print, share on WhatsApp or email",
+    output: "A4 PDF · print or share on WhatsApp",
     icon: "ear",
     tone: "yellow",
   },

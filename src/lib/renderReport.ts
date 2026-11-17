@@ -357,12 +357,14 @@ export function drawReport(
       symbol(ear, "ac", point.masked, xFor(hz), yFor(point.db), r);
       if (point.noResponse) noResponseArrow(ear, xFor(hz), yFor(point.db), r);
     }
-    const offset = (ear === "right" ? -1 : 1) * Math.min(cellWidth * 0.24, 17);
+    // Bone conduction sits on the frequency line, like air conduction, as on the
+    // clinic's printed form (ASHA puts it just beside the line instead). Where AC
+    // and BC are equal, the two symbols overlap.
     for (const hz of BC_FREQUENCIES) {
       const point = readPoint(side.bc[hz]);
       if (!point) continue;
-      symbol(ear, "bc", point.masked, xFor(hz) + offset, yFor(point.db), r);
-      if (point.noResponse) noResponseArrow(ear, xFor(hz) + offset, yFor(point.db), r);
+      symbol(ear, "bc", point.masked, xFor(hz), yFor(point.db), r);
+      if (point.noResponse) noResponseArrow(ear, xFor(hz), yFor(point.db), r);
     }
   // Clinical symbol legend for this ear.
   const legendY = top + height + belowChart;

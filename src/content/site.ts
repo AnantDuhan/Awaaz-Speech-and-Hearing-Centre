@@ -28,7 +28,7 @@ export const site = {
   },
   address: {
     street: "T - Point se Left side, Main Rd",
-    area: "Old Awas Vikas",
+    area: "Old Avas Vikas",
     city: "Kashipur",
     state: "Uttarakhand",
     pin: "244713",
@@ -493,7 +493,7 @@ export const team: Specialist[] = [
     slug: "pushpak-kumar",
     name: "Pushpak Kumar",
     role: "Audiologist & Speech Therapist",
-    qualification: "BASLP",
+    qualification: "BASLP, DHLS",
     registration: "A81403",
     photo: "/pushpak-kumar.jpg",
     bio: "",

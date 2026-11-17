@@ -133,6 +133,20 @@ export const SCALES: Record<Scale["id"], Scale> = {
 /** The degree-of-hearing-loss options offered in the dropdown. */
 export const DEGREE_BANDS = SCALES.clinic.bands;
 
+/** Type of hearing loss, picked beside the degree. "" adds nothing. */
+export const LOSS_TYPES = ["", "Conductive", "Mixed", "Sensorineural"] as const;
+export type LossType = (typeof LOSS_TYPES)[number];
+
+/**
+ * Puts the type into the degree: "Mild Hearing Loss" + "Mixed" →
+ * "Mild Mixed Hearing Loss". A type has no meaning for "Normal Hearing Level",
+ * so it's left as it is.
+ */
+export function describeHearingLoss(degree: string, type: LossType): string {
+  if (!type || !/ Hearing Loss$/.test(degree)) return degree;
+  return degree.replace(/ Hearing Loss$/, ` ${type} Hearing Loss`);
+}
+
 /** Classifies a PTA using the clinic's scale (upper limits are inclusive). */
 export function classify(pta: number, scale: Scale): string {
   const band = scale.bands.find((b) => pta <= b.max);

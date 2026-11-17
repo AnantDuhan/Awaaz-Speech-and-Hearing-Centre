@@ -264,6 +264,28 @@
   font-weight: 800;
 }
 
+/* Degree and Type dropdowns side by side; the degree's text is longer. */
+.degreeType {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.degreeType select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.degreeResult {
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 480px) {
+  .degreeType {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .warning {
   padding: 10px 14px;
   border-radius: 12px;

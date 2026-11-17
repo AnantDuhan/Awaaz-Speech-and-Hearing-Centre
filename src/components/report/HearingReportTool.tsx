@@ -8,6 +8,9 @@ import {
   type Conduction,
   type Ear,
   DEGREE_BANDS,
+  describeHearingLoss,
+  LOSS_TYPES,
+  type LossType,
   emptyThresholds,
   formatDb,
   isInvalid,
@@ -31,7 +34,7 @@ const CLINIC: ClinicInfo = {
   name: "Aawaz Speech & Hearing Centre",
   role: "Audiologist & Speech Therapist",
   branches: [
-    { label: "Main Branch", address: "Old Awas Vikas, Kashipur (U.S. Nagar), Uttarakhand" },
+    { label: "Main Branch", address: "Old Avas Vikas, Kashipur (U.S. Nagar), Uttarakhand" },
     { label: "Jaspur Branch", address: "Jaspur (U.S. Nagar), Uttarakhand" },
     { label: "Bazpur Branch", address: "Bazpur (U.S. Nagar), Uttarakhand" },
     { label: "Ramnagar Branch", address: "Ramnagar (Nainital), Uttarakhand" },
@@ -45,29 +48,40 @@ const EAR_LABEL: Record<Ear, string> = { right: "Right ear", left: "Left ear" };
 const KIND_LABEL: Record<Conduction, string> = { ac: "air conduction", bc: "bone conduction" };
 
 const isPlaceholder = (value: string) => /\[.*\]/.test(value);
+/** "Moderately Severe Hearing Loss" → "Moderately Severe", for the narrow dropdown. */
+const shortDegree = (label: string) => label.replace(/ Hearing (Loss|Level)$/, "");
 
 function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * AWZ-YYMMDD-HHMM: the date and the time the report was started. Two reports
+ * started in the same minute get the same number, so staff can edit it.
+ */
 function newReportNo() {
+  const now = new Date();
   const date = today().replace(/-/g, "").slice(2);
-  return `${REPORT_PREFIX}-${date}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const time = `${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+  return `${REPORT_PREFIX}-${date}-${time}`;
 }
 
 function blankReport(): ReportData {
   const member = team.find((person) => !isPlaceholder(person.name));
   const real = (value: string | undefined) => (value && !isPlaceholder(value) ? value : "");
+  const audiologistName = "Pushpak Kumar";
   return {
     reportNo: newReportNo(),
     testDate: today(),
-    patient: { name: "", age: "", sex: "", id: "", referredBy: "", mobile: "", address: "" },
+    // "Audiologist Name" starts as the clinic audiologist; staff can change it per report.
+    patient: { name: "", age: "", sex: "", audiologistName, mobile: "", address: "" },
     scaleId: "clinic",
     degree: { right: "", left: "" },
+    lossType: { right: "", left: "" },
     thresholds: emptyThresholds(),
     audiologist: {
-      name: "Pushpak Kumar",
+      name: audiologistName,
       qualification: real(member?.qualification),
       registration: "A81403",
     },
@@ -93,8 +107,7 @@ function exampleReport(): ReportData {
     name: "Sample Patient",
     age: "45",
     sex: "Male",
-    id: "DEMO-001",
-    referredBy: "Dr. Example (ENT)",
+    audiologistName: report.patient.audiologistName,
     mobile: "9876543210",
     address: "Sample address",
   };
@@ -201,7 +214,9 @@ export function HearingReportTool() {
     left: pureToneAverage(data.thresholds, "left", scale),
   };
 
-  const frequencies = ALL_FREQUENCIES;
+  // 125 Hz isn't tested at the clinic, so it has no input; it stays on the graph's
+  // frequency axis (its left edge), as on the printed form.
+  const frequencies = ALL_FREQUENCIES.filter((hz) => hz !== 125);
 
   const invalidCount = EARS.reduce(
     (count, ear) =>
@@ -328,15 +343,6 @@ export function HearingReportTool() {
                 <option>Other</option>
               </select>
             </Field>
-            <Field label="Patient ID">
-              <input
-                className={styles.input}
-                value={data.patient.id}
-                maxLength={30}
-                autoComplete="off"
-                onChange={(e) => update((d) => void (d.patient.id = e.target.value))}
-              />
-            </Field>
             <Field label="Date of test">
               <input
                 className={styles.input}
@@ -345,13 +351,13 @@ export function HearingReportTool() {
                 onChange={(e) => update((d) => void (d.testDate = e.target.value))}
               />
             </Field>
-            <Field label="Referred by">
+            <Field label="Audiologist name">
               <input
                 className={styles.input}
-                value={data.patient.referredBy}
+                value={data.patient.audiologistName}
                 maxLength={50}
                 autoComplete="off"
-                onChange={(e) => update((d) => void (d.patient.referredBy = e.target.value))}
+                onChange={(e) => update((d) => void (d.patient.audiologistName = e.target.value))}
               />
             </Field>
           </div>
@@ -456,6 +462,8 @@ export function HearingReportTool() {
           <div className={styles.pta}>
             {EARS.map((ear) => {
               const result = pta[ear];
+              const degree = data.degree[ear] || (result.ok ? result.degree : "");
+              const typeApplies = / Hearing Loss$/.test(degree);
               return (
                 <div key={ear}>
                   <p className={`${styles.ptaEar} ${ear === "right" ? styles.right : styles.left}`}>
@@ -464,20 +472,42 @@ export function HearingReportTool() {
                   <p className={styles.ptaValue} aria-live="polite">
                     PTA: {ptaSummary(ear)}
                   </p>
-                  <Field label="Degree of hearing loss">
-                    <select
-                      className={styles.input}
-                      value={data.degree[ear]}
-                      onChange={(e) => update((d) => void (d.degree[ear] = e.target.value))}
-                    >
-                      <option value="">{result.ok ? `From PTA: ${result.degree}` : "Choose…"}</option>
-                      {DEGREE_BANDS.map((band) => (
-                        <option key={band.label} value={band.label}>
-                          {band.range} dB · {band.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
+                  <div className={styles.degreeType}>
+                    <Field label="Degree">
+                      <select
+                        className={styles.input}
+                        value={data.degree[ear]}
+                        onChange={(e) => update((d) => void (d.degree[ear] = e.target.value))}
+                      >
+                        {/* Short names here so they fit beside Type; the full wording is shown below and printed. */}
+                        <option value="">{result.ok ? `From PTA: ${shortDegree(result.degree)}` : "Choose…"}</option>
+                        {DEGREE_BANDS.map((band) => (
+                          <option key={band.label} value={band.label}>
+                            {band.range} dB · {shortDegree(band.label)}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Type">
+                      <select
+                        className={styles.input}
+                        value={data.lossType[ear]}
+                        disabled={degree !== "" && !typeApplies}
+                        title={degree !== "" && !typeApplies ? "No type for normal hearing" : undefined}
+                        onChange={(e) => update((d) => void (d.lossType[ear] = e.target.value as LossType))}
+                      >
+                        {LOSS_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type || "—"}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                  <p className={styles.degreeResult} aria-live="polite">
+                    Degree &amp; Type of Hearing Loss:{" "}
+                    <strong>{degree ? describeHearingLoss(degree, data.lossType[ear]) : "—"}</strong>
+                  </p>
                 </div>
               );
             })}

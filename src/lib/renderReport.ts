@@ -2,8 +2,8 @@
  * Draws the hearing test report onto a <canvas>, entirely in the browser.
  * The page is A4 landscape (1754 × 1240 at 150 dpi); downloads are drawn at 2× (300 dpi).
  *
- * Audiogram conventions (ASHA): right ear red, left ear blue; 20 dB on the
- * y-axis spans the same distance as one octave on the x-axis.
+ * Audiogram layout follows the clinic's printed form: right ear red, left ear
+ * blue, one equal column per frequency, symbols on the frequency line.
  *   Right: AC ○, AC masked △, BC <, BC masked [
  *   Left:  AC ✕, AC masked □, BC >, BC masked ]
  *   No response: an arrow pointing down and away from the symbol.
@@ -11,8 +11,10 @@
 import {
   ALL_FREQUENCIES,
   BC_FREQUENCIES,
+  describeHearingLoss,
   type Ear,
   formatDb,
+  type LossType,
   MAX_DB,
   MIN_DB,
   pureToneAverage,
@@ -29,14 +31,16 @@ export type ReportData = {
     name: string;
     age: string;
     sex: string;
-    id: string;
-    referredBy: string;
+    /** "Audiologist Name" in the patient row; starts as the clinic audiologist and can be changed. */
+    audiologistName: string;
     mobile: string;
     address: string;
   };
   scaleId: Scale["id"];
   /** Degree of hearing loss picked by the audiologist; "" uses the one worked out from the PTA. */
   degree: Record<Ear, string>;
+  /** Type of hearing loss added to the degree ("" adds nothing). */
+  lossType: Record<Ear, LossType>;
   thresholds: Thresholds;
   audiologist: { name: string; qualification: string; registration: string };
 };
@@ -160,7 +164,7 @@ export function drawReport(
   });
   // Audiologist and contact details, right-aligned; the CRR no. lines up with the last branch.
   const R = W - M;
-  write(clinic.role.toUpperCase(), R, 58, 12, 800, C.faint, "right", 1.2);
+  write(clinic.role, R, 58, 14, 800, C.muted, "right");
   write(fit(orDash(data.audiologist.name), rightBlockWidth, 24, 900), R, 88, 24, 900, C.navy, "right");
   write(fit(`Mob. ${clinic.phone}`, rightBlockWidth, 15.5, 700), R, 114, 15.5, 700, C.ink, "right");
   write(fit(`Email: ${clinic.email}`, rightBlockWidth, 15, 600), R, 136, 15, 600, C.muted, "right");
@@ -185,17 +189,13 @@ export function drawReport(
   const sex = data.patient.sex.trim();
   const gender = sex === "Male" ? "M" : sex === "Female" ? "F" : sex;
   const ageGender = [age && /^\d+$/.test(age) ? `${age} Yrs.` : age, gender].filter(Boolean).join("/") || "—";
-  const referredBy = data.patient.referredBy.trim();
   const fields: { label: string; value: string; weight: number }[] = [
-    { label: "C. R. No.", value: orDash(data.patient.id), weight: 1 },
-    { label: "Patient's Name", value: orDash(data.patient.name), weight: 1.7 },
+    { label: "Patient's Name", value: orDash(data.patient.name), weight: 1.8 },
     { label: "Age/G", value: ageGender, weight: 1 },
-    { label: "Address", value: orDash(data.patient.address), weight: 1.7 },
+    { label: "Address", value: orDash(data.patient.address), weight: 1.9 },
     { label: "Mobile No.", value: orDash(data.patient.mobile), weight: 1.1 },
     { label: "Date", value: data.testDate ? formatDate(data.testDate) : "—", weight: 0.9 },
-    // Not on the printed form, so it only appears when staff fill it in.
-    ...(referredBy ? [{ label: "Referred By", value: referredBy, weight: 1.3 }] : []),
-    { label: "Doctor Name", value: orDash(data.audiologist.name), weight: 1.2 },
+    { label: "Audiologist Name", value: orDash(data.patient.audiologistName), weight: 1.4 },
   ];
   const fieldsWidth = W - 2 * M - 48;
   const totalWeight = fields.reduce((sum, field) => sum + field.weight, 0);
@@ -240,7 +240,8 @@ export function drawReport(
       ctx.stroke();
     } else {
 // Bone conduction: "<" / "[" for the right ear, ">" / "]" for the left.
-      const dir = ear === "right" ? -1 : 1;
+      // dir is the side the open ends face: right for "<", left for ">".
+      const dir = ear === "right" ? 1 : -1;
       const w = r * 0.6;
       if (!masked) {
         ctx.moveTo(x + dir * w, y - r);
@@ -349,6 +350,28 @@ export function drawReport(
       if (previous) line(previous.x, previous.y, current.x, current.y);
       previous = current;
     }
+    // Bone conduction: the same, as a dotted line (as on the clinic's printed form).
+    // Drawn directly rather than with line(), which resets the dash pattern.
+    ctx.setLineDash([0.1, 7]);
+    ctx.lineWidth = 2.8;
+    previous = null;
+    for (const hz of BC_FREQUENCIES) {
+      const point = readPoint(side.bc[hz]);
+      if (!point) continue;
+      if (point.noResponse) {
+        previous = null;
+        continue;
+      }
+      const current = { x: xFor(hz), y: yFor(point.db) };
+      if (previous) {
+        ctx.beginPath();
+        ctx.moveTo(previous.x, previous.y);
+        ctx.lineTo(current.x, current.y);
+        ctx.stroke();
+      }
+      previous = current;
+    }
+    ctx.setLineDash([]);
     ctx.restore();
     const r = Math.min(cellWidth, cellHeight) * 0.24;
     for (const hz of ALL_FREQUENCIES) {
@@ -410,15 +433,17 @@ export function drawReport(
     const result = pta[ear];
     return result.ok ? `${formatDb(result.value)} dB HL` : "—";
   };
+  // Degree from the dropdown (or the PTA), with the type of loss added if one is picked:
+  // "Mild Hearing Loss" + "Mixed" → "Mild Mixed Hearing Loss".
   const degreeText = (ear: Ear) => {
-    if (data.degree[ear]) return data.degree[ear];
     const result = pta[ear];
-    return result.ok ? result.degree : "—";
+    const degree = data.degree[ear] || (result.ok ? result.degree : "");
+    return degree ? describeHearingLoss(degree, data.lossType[ear]) : "—";
   };
 
   const rows: [string, string, string][] = [
     ["Pure-tone average (PTA)", ptaText("left"), ptaText("right")],
-    ["Degree of hearing loss", degreeText("left"), degreeText("right")],
+    ["Degree & Type of Hearing Loss", degreeText("left"), degreeText("right")],
   ];
   // Sits in the bottom strip, left of the signature, with its last row level
   // with the registration number.
@@ -428,8 +453,20 @@ export function drawReport(
   const tableWidth = sigLeft - 48 - M;
   const tableTop = signatureTop + 38;
   const rowHeight = 30;
-  const labelWidth = 340;
+  const labelWidth = 300;
   const valueWidth = (tableWidth - labelWidth) / 2;
+  // Long values such as "Moderately Severe Sensorineural Hearing Loss" shrink a
+  // little (down to 13 px) before they'd be cut short.
+  const writeValue = (text: string, x: number, y: number) => {
+    const maxWidth = valueWidth - 28;
+    let size = 16;
+    setFont(size, 800);
+    while (size > 13 && ctx.measureText(text).width > maxWidth) {
+      size -= 0.5;
+      setFont(size, 800);
+    }
+    write(fit(text, maxWidth, size, 800), x, y, size, 800, C.ink);
+  };
   roundRect(tableLeft, tableTop, tableWidth, rowHeight, 10);
   ctx.fillStyle = C.tint;
   ctx.fill();
@@ -442,29 +479,15 @@ export function drawReport(
     ctx.lineWidth = 2.8;
     line(tableLeft, y + rowHeight, tableLeft + tableWidth, y + rowHeight);
     write(fit(label, labelWidth - 28, 15, 700), tableLeft + 16, y + 21, 15, 700, C.muted);
-    const notCalculated = (v: string) => v.startsWith("Not calculated");
-    write(
-      fit(left, valueWidth - 28, notCalculated(left) ? 13.5 : 16, notCalculated(left) ? 700 : 800),
-      tableLeft + labelWidth + 16,
-      y + 21,
-      notCalculated(left) ? 13.5 : 16,
-      notCalculated(left) ? 700 : 800,
-      notCalculated(left) ? C.faint : C.ink,
-    );
-    write(
-      fit(right, valueWidth - 28, notCalculated(right) ? 13.5 : 16, notCalculated(right) ? 700 : 800),
-      tableLeft + labelWidth + valueWidth + 16,
-      y + 21,
-      notCalculated(right) ? 13.5 : 16,
-      notCalculated(right) ? 700 : 800,
-      notCalculated(right) ? C.faint : C.ink,
-    );
+    writeValue(left, tableLeft + labelWidth + 16, y + 21);
+    writeValue(right, tableLeft + labelWidth + valueWidth + 16, y + 21);
   });
-// ---------------- signature & footer ----------------
+// ---------------- signature ----------------
+  // Line to sign on, then the audiologist's name, qualifications and CRR no.
+  // (no "Signature & Stamp" caption, as the clinic asked).
   ctx.strokeStyle = C.ink;
   ctx.lineWidth = 1.2;
-  line(sigLeft, signatureTop + 48, W - M, signatureTop + 48);
-  write("Signature & Stamp", W - M, signatureTop + 65, 11.5, 700, C.faint, "right");
+  line(sigLeft, signatureTop + 60, W - M, signatureTop + 60);
   write(fit(orDash(data.audiologist.name), sigWidth, 17, 800), W - M, signatureTop + 88, 17, 800, C.ink, "right");
   write(fit(orDash(data.audiologist.qualification), sigWidth, 14, 600), W - M, signatureTop + 108, 14, 600, C.muted, "right");
   write(

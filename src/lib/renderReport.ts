@@ -145,12 +145,14 @@ export function drawReport(
   const headerTextX = M + logoWidth + 24;
   const rightBlockWidth = 340;
   const headerTextWidth = W - M - rightBlockWidth - 40 - headerTextX;
-  write(fit(clinic.name, headerTextWidth, 40, 900), headerTextX, 78, 40, 900, C.navy);
+  // Clinic name: the largest text on the page (shrinks only if a longer name wouldn't fit).
+  const nameSize = 50;
+  write(fit(clinic.name, headerTextWidth, nameSize, 900), headerTextX, 84, nameSize, 900, C.navy);
   // Branches: labels in one column, a colon, then the address.
   setFont(14.5, 800);
   const branchLabelWidth = Math.max(0, ...clinic.branches.map((b) => ctx.measureText(b.label).width)) + 12;
   clinic.branches.slice(0, 4).forEach((branch, i) => {
-    const y = 108 + i * 20;
+    const y = 113 + i * 19;
     write(branch.label, headerTextX, y, 14.5, 800, C.ink);
     write(":", headerTextX + branchLabelWidth, y, 14.5, 800, C.ink);
     const addressX = headerTextX + branchLabelWidth + 14;
@@ -162,7 +164,7 @@ export function drawReport(
   write(fit(orDash(data.audiologist.name), rightBlockWidth, 24, 900), R, 88, 24, 900, C.navy, "right");
   write(fit(`Mob. ${clinic.phone}`, rightBlockWidth, 15.5, 700), R, 114, 15.5, 700, C.ink, "right");
   write(fit(`Email: ${clinic.email}`, rightBlockWidth, 15, 600), R, 136, 15, 600, C.muted, "right");
-  write(fit(`CRR No. ${orDash(data.audiologist.registration)}`, rightBlockWidth, 15.5, 800), R, 168, 15.5, 800, C.ink, "right");
+  write(fit(`CRR No. ${orDash(data.audiologist.registration)}`, rightBlockWidth, 15.5, 800), R, 170, 15.5, 800, C.ink, "right");
   ctx.fillStyle = C.yellow;
   ctx.fillRect(M, 182, W - 2 * M, 5);
   // Title: centred and underlined, report number on the right of the same line.

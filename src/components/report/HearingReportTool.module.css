@@ -237,7 +237,8 @@
 
 .pta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* Wide enough that "71–90 dB · Severe Hearing Loss" isn't cut off in the dropdown. */
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 12px;
   margin: 0;
 }
@@ -248,13 +249,18 @@
   background: var(--tint);
 }
 
-.pta dt {
-  font-size: 0.8125rem;
+.pta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ptaEar {
+  font-size: 0.875rem;
   font-weight: 900;
 }
 
-.pta dd {
-  margin: 2px 0 0;
+.ptaValue {
   font-weight: 800;
 }
 

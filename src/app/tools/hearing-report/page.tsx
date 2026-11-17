@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OfflineStatusLoader } from "@/components/offline/OfflineStatusLoader";
 import { PageIntro } from "@/components/PageIntro";
 import { HearingReportLoader } from "@/components/report/HearingReportLoader";
 import ui from "@/styles/ui.module.css";
@@ -9,6 +10,8 @@ import ui from "@/styles/ui.module.css";
 export const metadata: Metadata = {
   title: "Hearing test report",
   robots: { index: false, follow: false },
+  // Lets staff install the tool as an app (opens offline too).
+  manifest: "/tools.webmanifest",
 };
 
 export default function HearingReportPage() {
@@ -24,6 +27,7 @@ export default function HearingReportPage() {
         title="Hearing test report"
       >
         <p>Enter the test results to create an A4 PDF report to print or send on WhatsApp.</p>
+        <OfflineStatusLoader />
       </PageIntro>
       <section className={ui.section} aria-label="Report form">
         <div className={ui.container}>

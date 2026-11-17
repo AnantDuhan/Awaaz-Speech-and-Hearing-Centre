@@ -35,6 +35,8 @@ export type ReportData = {
     address: string;
   };
   scaleId: Scale["id"];
+  /** Degree of hearing loss picked by the audiologist; "" uses the one worked out from the PTA. */
+  degree: Record<Ear, string>;
   thresholds: Thresholds;
   audiologist: { name: string; qualification: string; registration: string };
 };
@@ -279,29 +281,25 @@ export function drawReport(
   const chartTop = panelTop + 34;
   const belowChart = 86; // frequency labels, axis title and symbol legend
   const chartBottomLimit = signatureTop - 22 - belowChart;
-  // Chart height in octaves (ASHA: 20 dB on the y-axis = one octave on the x-axis).
-  const dbOctaves = (MAX_DB - MIN_DB) / 20;
-  // The grid is 14 equal columns, each half an octave wide (half an octave of
-  // margin either side of 125 Hz and 8000 Hz). 750, 1500, 3000 and 6000 Hz sit
-  // midway between their octaves, as on printed audiogram forms. A column is as
-  // wide as a 10 dB row is tall, so every grid box is the same square.
-  const COLUMNS = 14;
-  const unit = Math.min((panelWidth - 66) / 7, (chartBottomLimit - chartTop) / dbOctaves);
-  const cell = unit / 2;
-  const column = (hz: number) => Math.round(2 * Math.log2(hz / 125)) + 1;
+  // As on the clinic's printed form: one column per test frequency, all the same
+  // width, with 125 Hz on the left edge (the corner with the dB axis), 250 Hz one
+  // box along, 500 Hz two boxes along, and so on to 8000 Hz on the right edge.
+  // Rows are 10 dB. Boxes fill the space, so they're wider than they are tall.
+  const COLUMNS = ALL_FREQUENCIES.length - 1;
+  const ROWS = (MAX_DB - MIN_DB) / 10;
+  const chartLeftInset = 62; // dB labels and the rotated axis title
+  const chartWidth = panelWidth - chartLeftInset - 22; // room for symbols on the 8000 Hz edge
+  const cellWidth = chartWidth / COLUMNS;
+  const cellHeight = (chartBottomLimit - chartTop) / ROWS;
   const drawAudiogram = (ear: Ear, px: number) => {
     const color = EAR_COLOR[ear];
-    const width = cell * COLUMNS;
-    const left = px + (panelWidth - width) / 2;
+    const width = chartWidth;
+    const left = px + chartLeftInset;
     const top = chartTop;
-    const height = unit * dbOctaves;
-    const xFor = (hz: number) => left + column(hz) * cell;
-    const yFor = (db: number) => top + ((db - MIN_DB) / 20) * unit;
+    const height = cellHeight * ROWS;
+    const xFor = (hz: number) => left + ALL_FREQUENCIES.indexOf(hz) * cellWidth;
+    const yFor = (db: number) => top + ((db - MIN_DB) / 10) * cellHeight;
     write(ear === "right" ? "RIGHT EAR" : "LEFT EAR", left, panelTop + 18, 17, 900, color, "left", 1.2);
-    const result = pta[ear];
-    if (result.ok) {
-      write(`PTA ${formatDb(result.value)} dB HL`, left + width, panelTop + 18, 15, 800, C.ink, "right");
-    }
 // Normal range band
     ctx.fillStyle = C.band;
     ctx.fillRect(left, yFor(MIN_DB), width, yFor(scale.normalLimit) - yFor(MIN_DB));
@@ -311,14 +309,13 @@ export function drawReport(
     for (let db = MIN_DB; db <= MAX_DB; db += 10) {
       ctx.strokeStyle = db === 0 ? C.gridStrong : C.grid;
       line(left, yFor(db), left + width, yFor(db));
-      write(String(db), left - 10, yFor(db) + 4.5, 12.5, 700, C.muted, "right");
+      // Set back from the edge so a 125 Hz symbol on the axis doesn't cover the numbers.
+      write(String(db), left - 17, yFor(db) + 4.5, 12.5, 700, C.muted, "right");
     }
-    // Every column line is drawn the same, including the two unlabelled ones
-    // between 125–250 Hz and 250–500 Hz, so all boxes look identical.
     ctx.strokeStyle = C.grid;
     ctx.lineWidth = 1;
     for (let i = 1; i < COLUMNS; i++) {
-      line(left + i * cell, top, left + i * cell, top + height);
+      line(left + i * cellWidth, top, left + i * cellWidth, top + height);
     }
     for (const hz of ALL_FREQUENCIES) {
       write(String(hz), xFor(hz), top + height + 22, 13, 700, C.muted, "center");
@@ -351,14 +348,14 @@ export function drawReport(
       previous = current;
     }
     ctx.restore();
-    const r = cell * 0.24;
+    const r = Math.min(cellWidth, cellHeight) * 0.24;
     for (const hz of ALL_FREQUENCIES) {
       const point = readPoint(side.ac[hz]);
       if (!point) continue;
       symbol(ear, "ac", point.masked, xFor(hz), yFor(point.db), r);
       if (point.noResponse) noResponseArrow(ear, xFor(hz), yFor(point.db), r);
     }
-    const offset = (ear === "right" ? -1 : 1) * cell * 0.36;
+    const offset = (ear === "right" ? -1 : 1) * Math.min(cellWidth * 0.24, 17);
     for (const hz of BC_FREQUENCIES) {
       const point = readPoint(side.bc[hz]);
       if (!point) continue;
@@ -410,6 +407,7 @@ export function drawReport(
     return result.ok ? `${formatDb(result.value)} dB HL` : "—";
   };
   const degreeText = (ear: Ear) => {
+    if (data.degree[ear]) return data.degree[ear];
     const result = pta[ear];
     return result.ok ? result.degree : "—";
   };

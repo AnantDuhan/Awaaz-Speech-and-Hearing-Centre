@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/build-offline.mjs",
     "start": "next start",
     "lint": "eslint",
     "check:launch": "node scripts/check-launch.mjs"

@@ -98,3 +98,12 @@ section[id] {
     transition: none !important;
   }
 }
+
+/* Installed staff-tools app (public/tools.webmanifest, scope /tools): show just
+   the tool in its own window, without the website's menu and footer. */
+@media (display-mode: standalone) {
+  body > header,
+  body > footer {
+    display: none;
+  }
+}

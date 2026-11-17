@@ -1,5 +1,5 @@
 import Image from "next/image";
-import logoImage from "@/app/apple-icon.png";
+import logoImage from "./aawaz-logo.jpg";
 
 export const SPEECH_BUBBLE_PATH =
   "M10 12c0-4 3-7 7-7h30c4 0 7 3 7 7v24c0 4-3 7-7 7H29l-12 11V43c-4 0-7-3-7-7z";

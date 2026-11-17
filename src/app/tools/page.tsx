@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/Icon";
+import { OfflineStatusLoader } from "@/components/offline/OfflineStatusLoader";
 import { PageIntro } from "@/components/PageIntro";
 import ui from "@/styles/ui.module.css";
 import styles from "./tools.module.css";
@@ -10,6 +11,8 @@ import styles from "./tools.module.css";
 export const metadata: Metadata = {
   title: "Staff tools",
   robots: { index: false, follow: false },
+  // Lets staff install the tools as an app (opens offline too).
+  manifest: "/tools.webmanifest",
 };
 
 type Tool = {
@@ -44,6 +47,7 @@ export default function ToolsPage() {
           Tools for the clinic team. This page isn&apos;t linked from the public website, so bookmark
           it on the clinic computer.
         </p>
+        <OfflineStatusLoader />
       </PageIntro>
 
       <section className={ui.section} aria-label="Tools">

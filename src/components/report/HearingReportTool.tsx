@@ -7,6 +7,7 @@ import {
   BC_FREQUENCIES,
   type Conduction,
   type Ear,
+  DEGREE_BANDS,
   emptyThresholds,
   formatDb,
   isInvalid,
@@ -62,7 +63,8 @@ function blankReport(): ReportData {
     reportNo: newReportNo(),
     testDate: today(),
     patient: { name: "", age: "", sex: "", id: "", referredBy: "", mobile: "", address: "" },
-    scaleId: "who",
+    scaleId: "clinic",
+    degree: { right: "", left: "" },
     thresholds: emptyThresholds(),
     audiologist: {
       name: "Pushpak Kumar",
@@ -272,9 +274,7 @@ export function HearingReportTool() {
 
   const ptaSummary = (ear: Ear) => {
     const result = pta[ear];
-    return result.ok
-      ? `${formatDb(result.value)} dB HL · ${result.degree}`
-      : `Not calculated yet (${result.reason})`;
+    return result.ok ? `${formatDb(result.value)} dB HL` : `not calculated yet (${result.reason})`;
   };
 
   return (
@@ -449,33 +449,39 @@ export function HearingReportTool() {
             </p>
           ) : null}
 
-          <div className={styles.scale} role="radiogroup" aria-label="Hearing loss grading">
-            <span className={styles.label}>Hearing loss grading</span>
-            {[SCALES.who].map((option) => (
-              <label key={option.id} className={styles.radio}>
-                <input
-                  type="radio"
-                  name="scale"
-                  value={option.id}
-                  checked={data.scaleId === option.id}
-                  onChange={() => update((d) => void (d.scaleId = option.id))}
-                />
-                <span>
-                  <strong>{option.name}</strong> — PTA of{" "}
-                  {option.frequencies.map((hz) => (hz >= 1000 ? `${hz / 1000}k` : hz)).join(", ")} Hz
-                </span>
-              </label>
-            ))}
+          <p className={styles.help}>
+            Pure-tone average (PTA) = the average of the air-conduction thresholds at{" "}
+            {scale.frequencies.join(", ").replace(/, (\d+)$/, " and $1")} Hz.
+          </p>
+          <div className={styles.pta}>
+            {EARS.map((ear) => {
+              const result = pta[ear];
+              return (
+                <div key={ear}>
+                  <p className={`${styles.ptaEar} ${ear === "right" ? styles.right : styles.left}`}>
+                    {EAR_LABEL[ear]}
+                  </p>
+                  <p className={styles.ptaValue} aria-live="polite">
+                    PTA: {ptaSummary(ear)}
+                  </p>
+                  <Field label="Degree of hearing loss">
+                    <select
+                      className={styles.input}
+                      value={data.degree[ear]}
+                      onChange={(e) => update((d) => void (d.degree[ear] = e.target.value))}
+                    >
+                      <option value="">{result.ok ? `From PTA: ${result.degree}` : "Choose…"}</option>
+                      {DEGREE_BANDS.map((band) => (
+                        <option key={band.label} value={band.label}>
+                          {band.range} dB · {band.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              );
+            })}
           </div>
-
-          <dl className={styles.pta} aria-live="polite">
-            {EARS.map((ear) => (
-              <div key={ear}>
-                <dt className={ear === "right" ? styles.right : styles.left}>{EAR_LABEL[ear]} PTA</dt>
-                <dd>{ptaSummary(ear)}</dd>
-              </div>
-            ))}
-          </dl>
         </fieldset>
 
         <fieldset className={styles.section}>

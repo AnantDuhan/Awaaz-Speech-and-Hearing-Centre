@@ -91,20 +91,20 @@ export function isInvalid(point: Point | undefined) {
 }
 
 /* ------------------------------------------------------------------ */
-/* WHO (2021) hearing-loss classification                              */
+/* Degree of hearing loss: the clinic's own scale                     */
 /* ------------------------------------------------------------------ */
 
-type Band = {
+export type Band = {
   label: string;
-  /** Inclusive upper limit; Infinity for the last band. */
+  /** dB HL range as the audiologist writes it, shown in the dropdown. */
+  range: string;
+  /** Inclusive upper limit in dB HL; Infinity for the last band. */
   max: number;
-  strict?: boolean;
 };
 
 export type Scale = {
-  id: "who";
+  id: "clinic";
   name: string;
-  short: string;
   frequencies: number[];
   /** Top of the normal range, used to shade the audiogram. */
   normalLimit: number;
@@ -112,30 +112,30 @@ export type Scale = {
 };
 
 export const SCALES: Record<Scale["id"], Scale> = {
-  who: {
-    id: "who",
-    name: "WHO (2021)",
-    short: "WHO (2021), PTA of 0.5, 1, 2 and 4 kHz",
-    frequencies: [500, 1000, 2000, 4000],
-    normalLimit: 20,
+  clinic: {
+    id: "clinic",
+    name: "Aawaz clinic scale",
+    // Pure-tone average of 500, 1000 and 2000 Hz.
+    frequencies: [500, 1000, 2000],
+    normalLimit: 15,
     bands: [
-      { label: "Normal hearing", max: 20, strict: true },
-      { label: "Mild hearing loss", max: 35, strict: true },
-      { label: "Moderate hearing loss", max: 50, strict: true },
-      { label: "Moderately severe hearing loss", max: 65, strict: true },
-      { label: "Severe hearing loss", max: 80, strict: true },
-      { label: "Profound hearing loss", max: 95, strict: true },
-      { label: "Complete or total hearing loss", max: Infinity },
+      { label: "Normal Hearing Level", range: "0–15", max: 15 },
+      { label: "Minimal Hearing Loss", range: "16–25", max: 25 },
+      { label: "Mild Hearing Loss", range: "26–40", max: 40 },
+      { label: "Moderate Hearing Loss", range: "41–55", max: 55 },
+      { label: "Moderately Severe Hearing Loss", range: "56–70", max: 70 },
+      { label: "Severe Hearing Loss", range: "71–90", max: 90 },
+      { label: "Profound Hearing Loss", range: "Above 90", max: Infinity },
     ],
   },
 };
 
-/** Classifies a PTA using the selected hearing-loss scale. */
-export function classify(pta: number, scale: Scale): string {
-  const band = scale.bands.find((b) =>
-    b.strict ? pta < b.max : pta <= b.max
-  );
+/** The degree-of-hearing-loss options offered in the dropdown. */
+export const DEGREE_BANDS = SCALES.clinic.bands;
 
+/** Classifies a PTA using the clinic's scale (upper limits are inclusive). */
+export function classify(pta: number, scale: Scale): string {
+  const band = scale.bands.find((b) => pta <= b.max);
   return band?.label ?? scale.bands[scale.bands.length - 1].label;
 }
 
@@ -152,7 +152,7 @@ export type PtaResult =
 
 /**
  * Pure-tone average of air-conduction thresholds for one ear.
- * WHO PTA uses 500, 1000, 2000 and 4000 Hz.
+ * Uses 500, 1000 and 2000 Hz (the scale's frequencies).
  */
 export function pureToneAverage(
   thresholds: Thresholds,
@@ -200,7 +200,7 @@ export function pureToneAverage(
  * Returns null degree when the required PTA thresholds are incomplete.
  */
 export function calculateHearingDegrees(thresholds: Thresholds) {
-  const scale = SCALES.who;
+  const scale = SCALES.clinic;
 
   return {
     right: pureToneAverage(thresholds, "right", scale),

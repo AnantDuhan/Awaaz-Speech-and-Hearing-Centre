@@ -493,7 +493,7 @@ export const team: Specialist[] = [
     slug: "pushpak-kumar",
     name: "Pushpak Kumar",
     role: "Audiologist & Speech Therapist",
-    qualification: "Bachelor of Audiology and Speech-Language Pathology (BASLP)",
+    qualification: "BASLP",
     registration: "A81403",
     photo: "/pushpak-kumar.jpg",
     bio: "",

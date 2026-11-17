@@ -16,12 +16,13 @@
   color: var(--on-navy);
 }
 
+/* Fixed columns, so a longer address or email can't push the others around:
+   contact (wider) | hours | links, then the copyright on its own row. */
 .inner {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 24px 48px;
-  padding-block: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px 48px;
+  padding-top: 48px;
 }
 
 .block {
@@ -41,15 +42,29 @@
   color: var(--on-navy);
 }
 
+/* Full-width row under the columns, on the left, clear of the WhatsApp button. */
 .copyright {
-  align-self: flex-end;
+  grid-column: 1 / -1;
+  padding-block: 20px 28px;
+  border-top: 1px solid var(--navy-raised);
   font-size: 0.875rem;
 }
 
+@media (max-width: 900px) {
+  .inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Contact details get the full width; hours and links share the next row. */
+  .inner > address {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 560px) {
-  .copyright {
-    flex-basis: 100%;
-    align-self: auto;
+  .inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
   }
 
   /* Room for the floating WhatsApp button. */
